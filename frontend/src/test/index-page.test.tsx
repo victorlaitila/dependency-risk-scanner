@@ -1,0 +1,137 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi, afterEach } from "vitest";
+import Index from "../pages/Index";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe("Index", () => {
+  it("triggers API call on file upload", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        nodes: [{ id: "a", version: "1.0.0", impact: 3, blastRadius: [] }],
+        edges: [{ from: "a", to: "b" }],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { container } = render(<Index />);
+    const input = container.querySelector("input[type='file']") as HTMLInputElement;
+    const file = new File(["{}"], "package-lock.json", { type: "application/json" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0]).toBe("http://localhost:3001/analyze");
+      expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: "POST" });
+    });
+  });
+
+  it("updates UI with backend response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          nodes: [
+            { id: "pkg-a", version: "4.0.0", impact: 4, blastRadius: [] },
+            { id: "pkg-b", version: "1.0.0", impact: 1, blastRadius: ["pkg-a"] },
+          ],
+          edges: [{ from: "pkg-a", to: "pkg-b" }],
+        }),
+      }),
+    );
+
+    const { container } = render(<Index />);
+    const input = container.querySelector("input[type='file']") as HTMLInputElement;
+    const file = new File(["{}"], "package-lock.json", { type: "application/json" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText("pkg-a")).toBeInTheDocument();
+      expect(screen.getByText("4.0.0")).toBeInTheDocument();
+      expect(screen.getByText("Impact score: 4.00")).toBeInTheDocument();
+      expect(container.querySelectorAll("svg[aria-label='Dependency graph'] circle")).toHaveLength(2);
+      expect(container.querySelectorAll("svg[aria-label='Dependency graph'] line")).toHaveLength(1);
+    });
+  });
+
+  it("highlights the corresponding graph node on highlight button click", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          nodes: [
+            { id: "pkg-a", version: "4.0.0", impact: 4, blastRadius: [] },
+            { id: "pkg-b", version: "1.0.0", impact: 1, blastRadius: ["pkg-a"] },
+          ],
+          edges: [{ from: "pkg-a", to: "pkg-b" }],
+        }),
+      }),
+    );
+
+    const { container } = render(<Index />);
+    const input = container.querySelector("input[type='file']") as HTMLInputElement;
+    const file = new File(["{}"], "package-lock.json", { type: "application/json" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText("pkg-b")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Highlight pkg-b" }));
+
+    const circles = container.querySelectorAll("svg[aria-label='Dependency graph'] circle");
+
+    expect(circles[0].getAttribute("opacity")).toBe("0.65");
+    expect(circles[1].getAttribute("opacity")).toBe("1");
+  });
+
+  it("keeps only one highlighted package active at a time", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          nodes: [
+            { id: "pkg-a", version: "4.0.0", impact: 4, blastRadius: [] },
+            { id: "pkg-b", version: "1.0.0", impact: 1, blastRadius: ["pkg-a"] },
+          ],
+          edges: [{ from: "pkg-a", to: "pkg-b" }],
+        }),
+      }),
+    );
+
+    render(<Index />);
+    const input = document.querySelector("input[type='file']") as HTMLInputElement;
+    const file = new File(["{}"], "package-lock.json", { type: "application/json" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText("pkg-b")).toBeInTheDocument();
+    });
+
+    const highlightA = screen.getByRole("button", { name: "Highlight pkg-a" });
+    const highlightB = screen.getByRole("button", { name: "Highlight pkg-b" });
+
+    fireEvent.click(highlightA);
+    expect(highlightA).toHaveAttribute("aria-pressed", "true");
+    expect(highlightB).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(highlightB);
+    expect(highlightA).toHaveAttribute("aria-pressed", "false");
+    expect(highlightB).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(highlightB);
+    expect(highlightA).toHaveAttribute("aria-pressed", "false");
+    expect(highlightB).toHaveAttribute("aria-pressed", "false");
+  });
+});
