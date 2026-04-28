@@ -1,7 +1,9 @@
+import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { analyzeRoute } from "./routes/analyze.js";
+import { explainRoute } from "./routes/explain.js";
 
 const MAX_LOCKFILE_SIZE_BYTES = 5 * 1024 * 1024;
 const PORT = Number(process.env.PORT ?? 3001);
@@ -29,6 +31,8 @@ await server.register(multipart, {
   },
 });
 await server.register(analyzeRoute);
+// TODO: Add rate limiting to /explain if this endpoint is exposed publicly or gets heavy usage.
+await server.register(explainRoute);
 
 try {
   await server.listen({ port: PORT, host: "0.0.0.0" });

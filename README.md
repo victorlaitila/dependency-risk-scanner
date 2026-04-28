@@ -1,17 +1,24 @@
 # Dependency Risk Scanner
 
-Dependency Risk Scanner is a full-stack MVP that analyzes a `package-lock.json` file and surfaces dependency impact risk.
-The frontend uploads the lockfile and renders the processed result.
-The backend parses dependencies, builds a directed graph, computes impact scores, and returns graph data.
-This provides a clear first version of an end-to-end dependency risk workflow.
+Dependency Risk Scanner is a full-stack app for analyzing dependency impact from a `package-lock.json` file.
+It visualizes the dependency graph, highlights high-impact packages, and provides contextual AI explanations for why a package matters in the tree.
 
-Note: this project does not perform CVE or vulnerability database lookups.
-The "risk" view is based on graph-derived impact metrics.
+Note: the app does not perform CVE or vulnerability database lookups.
+The risk view is based on graph-derived impact metrics, and the AI explanation feature only describes those metrics.
+
+## Highlights
+
+- Upload a `package-lock.json` and analyze it in the browser
+- Visual dependency graph with impact-based sizing and coloring
+- Searchable risk table with package highlighting
+- Optional AI explanation panel for contextual, non-security-specific reasoning
+- Deterministic fallback when AI is unavailable
 
 ## Architecture
 
 - Frontend: React + TypeScript + Tailwind (Vite)
 - Backend: Node.js + TypeScript + Fastify
+- AI: Hugging Face chat-completions API with deterministic fallback
 - Flow:
   - Upload `package-lock.json` from the UI
   - `POST /analyze` to backend
@@ -55,9 +62,12 @@ For deployment, you can configure backend runtime settings with environment vari
 ```bash
 PORT=3001
 ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
+HUGGINGFACE_API_KEY=hf_your_token_here
+HUGGINGFACE_MODEL_ID=openai/gpt-oss-120b:fastest
 ```
 
 `ALLOWED_ORIGINS` accepts a comma-separated list of frontend origins.
+`HUGGINGFACE_MODEL_ID` is optional and can be changed if you want to try a different supported model.
 An example file is included at `backend/.env.example`.
 
 ## API
@@ -90,6 +100,58 @@ curl -X POST http://localhost:3001/analyze \
 }
 ```
 
+### AI Risk Explanation
+
+The `/explain` endpoint generates AI-powered natural language explanations for why a package is risky based on its structural impact metrics.
+
+**Important**: The AI explanation feature explains existing impact data. It does _not_ compute risk scores, check for CVEs, or invent vulnerabilities. It provides contextual reasoning for why packages matter in your dependency graph.
+
+#### Request
+
+`POST /explain` with `application/json`
+
+```json
+{
+  "name": "lodash",
+  "version": "4.17.21",
+  "impactScore": 4.5,
+  "dependentsCount": 12,
+  "depth": 3
+}
+```
+
+Fields:
+- `name`: Package name
+- `version`: Package version
+- `impactScore`: Computed impact score (0-100)
+- `dependentsCount`: Number of direct dependents
+- `depth`: Depth in the dependency tree
+
+#### Response
+
+```json
+{
+  "explanation": "lodash is a highly used utility library with 12 packages depending on it. Its significant role in the dependency tree means updates should be tested thoroughly."
+}
+```
+
+#### Behavior
+
+- **With API key**: Calls Hugging Face chat-completions with a supported model to generate contextual explanations
+- **Without API key**: Returns a deterministic fallback explanation based on impact score, dependent count, and tree depth
+- **On API failure**: Returns the deterministic fallback without interrupting the UI
+- **Response length**: Kept short for UI readability
+
+Configure the HuggingFace API key via environment variable:
+
+```bash
+HUGGINGFACE_API_KEY=hf_your_token_here
+```
+
+An example file is included at `backend/.env.example`.
+
+
+
 ## MVP Features
 
 - Multipart lockfile upload from UI
@@ -99,6 +161,13 @@ curl -X POST http://localhost:3001/analyze \
 - Blast radius computation (transitive dependents)
 - Impact score calculation: `downstream_count / (depth + 1)`
 - Risk table populated from real API response
+- **AI Risk Explanation**: Natural language explanations of why packages are risky based on structural impact data (with deterministic fallback)
+
+## Notes
+
+- The app is intentionally focused on dependency structure, not vulnerability scanning.
+- AI output is explanatory only and does not change graph metrics or risk scores.
+- The backend keeps file upload limits and origin allowlisting in place for basic safety.
 
 ## Tests
 

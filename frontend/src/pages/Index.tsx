@@ -3,6 +3,7 @@ import { useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "rea
 import DependencyGraphCard from "@/components/dependency-graph-card";
 import RiskTableCard from "@/components/risk-table-card";
 import UploadLockfileCard from "@/components/upload-lockfile-card";
+import { AIExplanationPanel } from "@/components/ai-explanation-panel";
 import {
   buildGraphLayout,
   edgeOpacityForHighlight,
@@ -111,6 +112,35 @@ const Index = () => {
     });
   };
 
+  const selectedNode = useMemo(
+    () => nodes.find((node) => node.id === activeNodeId),
+    [nodes, activeNodeId],
+  );
+
+  const selectedNodeDepth = useMemo(() => {
+    if (!activeNodeId || edges.length === 0) return 0;
+
+    const visited = new Set<string>();
+    const queue: Array<{ id: string; depth: number }> = [{ id: activeNodeId, depth: 0 }];
+    let maxDepth = 0;
+
+    while (queue.length > 0) {
+      const { id, depth } = queue.shift()!;
+      if (visited.has(id)) continue;
+      visited.add(id);
+      maxDepth = Math.max(maxDepth, depth);
+
+      const dependents = edges.filter((e) => e.to === id).map((e) => e.from);
+      for (const dependent of dependents) {
+        if (!visited.has(dependent)) {
+          queue.push({ id: dependent, depth: depth + 1 });
+        }
+      }
+    }
+
+    return maxDepth;
+  }, [activeNodeId, edges]);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b px-6 py-4">
@@ -136,7 +166,19 @@ const Index = () => {
           graphLayout={graphLayout}
           getEdgeOpacity={getEdgeOpacity}
           getNodeOpacity={getNodeOpacity}
+          activeNodeId={activeNodeId}
+          highlightedCount={blastRadiusSet.size + (activeNodeId ? 1 : 0)}
         />
+        {activeNodeId && (
+          <AIExplanationPanel
+            packageName={selectedNode?.id ?? null}
+            version={selectedNode?.version ?? null}
+            impactScore={selectedNode?.impact ?? null}
+            dependentsCount={selectedNode?.blastRadius.length ?? 0}
+            depth={selectedNodeDepth}
+            apiBaseUrl={API_BASE_URL}
+          />
+        )}
         <RiskTableCard
           sortedNodes={sortedNodes}
           activeNodeId={activeNodeId}
