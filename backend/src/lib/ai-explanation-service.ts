@@ -1,4 +1,5 @@
 import { SYSTEM_PROMPT, USER_PROMPT_TEMPLATE } from "./ai-explanation-prompts.js";
+import { featureFlags } from "./feature-flags.js";
 
 const DEFAULT_HUGGINGFACE_MODEL_ID = "openai/gpt-oss-120b:fastest";
 const MAX_EXPLANATION_LENGTH = 260;
@@ -16,31 +17,15 @@ export interface ExplanationResponse {
 }
 
 function generateFallbackExplanation(req: ExplanationRequest): string {
-  const factors: string[] = [];
-
-  if (req.impactScore > 50) {
-    factors.push("high impact score");
-  } else if (req.impactScore > 20) {
-    factors.push("moderate impact score");
-  }
-
-  if (req.dependentsCount > 10) {
-    factors.push("many packages depend on it");
-  } else if (req.dependentsCount > 0) {
-    factors.push("several packages depend on it");
-  }
-
-  if (req.depth > 5) {
-    factors.push("significant depth in the dependency tree");
-  } else if (req.depth > 2) {
-    factors.push("moderate depth in the dependency tree");
-  }
-
-  if (factors.length === 0) {
-    return `${req.name} is a low-impact dependency with minimal dependent packages, suggesting reduced structural risk in your dependency graph.`;
-  }
-
-  return `${req.name} presents structural risk factors including: ${factors.join(", ")}. Changes to this package could affect multiple downstream packages.`;
+  return [
+    "AI explanation unavailable.",
+    "Relevant data:",
+    `• Package: ${req.name}`,
+    `• Version: ${req.version}`,
+    `• Impact score: ${req.impactScore}`,
+    `• Direct dependents: ${req.dependentsCount}`,
+    `• Depth: ${req.depth}`,
+  ].join("\n");
 }
 
 function formatExplanation(rawText: string): string {
@@ -76,14 +61,14 @@ function formatExplanation(rawText: string): string {
 }
 
 export async function getExplanation(req: ExplanationRequest): Promise<ExplanationResponse> {
-  const apiKey = process.env.HUGGINGFACE_API_KEY;
-  if (!apiKey) {
+  if (!featureFlags.aiExplanationsEnabled()) {
     return {
       explanation: generateFallbackExplanation(req),
     };
   }
 
   try {
+    const apiKey = process.env.HUGGINGFACE_API_KEY;
     const modelId = process.env.HUGGINGFACE_MODEL_ID?.trim() || DEFAULT_HUGGINGFACE_MODEL_ID;
     const userPrompt = USER_PROMPT_TEMPLATE(req.name, req.version, req.impactScore, req.dependentsCount, req.depth);
     const response = await fetch("https://router.huggingface.co/v1/chat/completions", {

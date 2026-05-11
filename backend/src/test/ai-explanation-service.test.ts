@@ -16,7 +16,7 @@ describe("ai-explanation-service", () => {
     const result = await getExplanation(req);
 
     expect(result.explanation).toContain("lodash");
-    expect(result.explanation).toContain("packages depend on it");
+    expect(result.explanation).toContain("Direct dependents");
   });
 
   it("generates low-impact fallback", async () => {
@@ -33,7 +33,7 @@ describe("ai-explanation-service", () => {
     const result = await getExplanation(req);
 
     expect(result.explanation).toContain("minimal");
-    expect(result.explanation).toContain("low-impact");
+    expect(result.explanation).toContain("Impact score");
   });
 
   it("generates high-impact fallback", async () => {
@@ -50,7 +50,7 @@ describe("ai-explanation-service", () => {
     const result = await getExplanation(req);
 
     expect(result.explanation).toContain("critical");
-    expect(result.explanation).toContain("structural risk factors");
+    expect(result.explanation).toContain("Relevant data");
   });
 
   it("includes package name in fallback explanation", async () => {

@@ -91,7 +91,7 @@ export const AIExplanationPanel = ({
           </div>
         )}
         {explanation && !isLoading && (
-          <p className="text-sm text-foreground leading-relaxed">{explanation}</p>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{explanation}</p>
         )}
       </CardContent>
     </Card>

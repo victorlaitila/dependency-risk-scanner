@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { analyzePackageLock } from "../lib/analyze-lockfile.js";
+import { analyzePackageLockWithVulns } from "../lib/analyze-lockfile.js";
 
 const JSON_MIME_TYPES = new Set([
   "application/json",
@@ -31,7 +31,8 @@ export const analyzeRoute: FastifyPluginAsync = async (fastify) => {
           return reply.code(413).send({ message: "Uploaded file is too large." });
         }
 
-        return analyzePackageLock(fileBuffer.toString("utf8"));
+        // Use the vulnerability-enriched analyzer for API responses.
+        return await analyzePackageLockWithVulns(fileBuffer.toString("utf8"));
       } catch (error) {
         if (error instanceof SyntaxError) {
           return reply.code(400).send({ message: "The uploaded file must be valid JSON." });

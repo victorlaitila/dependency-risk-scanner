@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ChevronUp, HelpCircle } from "lucide-react";
+import { AlertTriangle, ChevronUp, HelpCircle, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -71,14 +71,15 @@ const RiskTableCard = ({
       </CardHeader>
       <CardContent>
         {sortedNodes.length > 0 && (
-          <div className="mb-3">
+          <div className="mb-3 mt-2 relative">
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search packages"
               aria-label="Search packages"
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="h-9 w-full rounded-md border border-input bg-muted/50 px-3 pr-9 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
+            <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           </div>
         )}
         <Table className="table-fixed">
@@ -102,6 +103,14 @@ const RiskTableCard = ({
                   </Tooltip>
                 </div>
               </TableHead>
+              <TableHead className="w-[120px]">
+                <div className="flex items-center gap-1.5">
+                  Vulnerabilities
+                  <Tooltip content="Number of known vulnerabilities for this exact package version (informational)">
+                    <HelpCircle className="h-4 w-4 cursor-help text-red-500/60 hover:text-red-500/80" />
+                  </Tooltip>
+                </div>
+              </TableHead>
               <TableHead className="w-[100px] text-right">
                 <div className="flex items-center justify-end gap-1.5">
                   Highlight
@@ -115,7 +124,7 @@ const RiskTableCard = ({
           <TableBody>
             {sortedNodes.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={5} className="h-24 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="h-24 text-center text-sm text-muted-foreground">
                   Upload a package-lock.json to populate this table
                 </TableCell>
               </TableRow>
@@ -136,6 +145,16 @@ const RiskTableCard = ({
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     Impact score: {node.impact.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {node.vulnerabilities?.count ? (
+                      <span className={`inline-flex items-center gap-2 rounded-md px-2 py-0.5 text-sm font-medium ${node.vulnerabilities?.hasCritical ? "bg-red-600 text-white" : "bg-amber-100 text-amber-800"}`}>
+                        {node.vulnerabilities.count}
+                        {node.vulnerabilities.hasCritical && <span className="ml-1 text-xs">⚠</span>}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">None</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <button

@@ -3,6 +3,10 @@ export type GraphNode = {
   version: string;
   impact: number;
   blastRadius: string[];
+  vulnerabilities?: {
+    count: number;
+    hasCritical: boolean;
+  };
 };
 
 export type GraphEdge = {
@@ -249,9 +253,107 @@ export function computeImpactScores(graph: MutableGraph): AnalyzeResult {
   return { nodes, edges };
 }
 
+async function fetchOsvVulnerabilities(pkg: string, version?: string): Promise<{ count: number; hasCritical: boolean }> {
+  try {
+    if (!version) {
+      // If version is missing, don't attempt a broad query — return safe default.
+      return { count: 0, hasCritical: false };
+    }
+
+    const body = {
+      package: { name: pkg, ecosystem: "npm" },
+      version,
+    } as Record<string, unknown>;
+
+    const resp = await fetch("https://api.osv.dev/v1/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!resp.ok) {
+      return { count: 0, hasCritical: false };
+    }
+
+    const data = await resp.json();
+
+    // OSV may return vulns in a `vulns` array or `vulnerabilities`; handle both.
+    const vulns = Array.isArray(data.vulns) ? data.vulns : Array.isArray(data.vulnerabilities) ? data.vulnerabilities : [];
+
+    const count = vulns.length;
+
+    // Detect a critical vuln conservatively: look for severity fields containing CRITICAL/HIGH or CVSS base scores >= 9
+    let hasCritical = false;
+
+    for (const v of vulns) {
+      if (!v || typeof v !== "object") continue;
+
+      // Severity may be a string or an array
+      if (typeof v.severity === "string") {
+        const s = v.severity.toLowerCase();
+        if (s.includes("critical") || s.includes("high")) {
+          hasCritical = true;
+          break;
+        }
+      }
+
+      if (Array.isArray(v.severity)) {
+        if (v.severity.some((x: string) => typeof x === "string" && /(critical|high)/i.test(x))) {
+          hasCritical = true;
+          break;
+        }
+      }
+
+      // Some OSV entries include `cvss` or `cvss_score` information.
+      if (v.cvss && typeof v.cvss === "object") {
+        const cvssValues = Object.values(v.cvss);
+        const scores = cvssValues.reduce((acc: any[], cur) => acc.concat(cur as any), [] as any[]);
+        for (const s of scores) {
+          const score = Number(s?.baseScore ?? s);
+          if (!Number.isNaN(score) && score >= 9) {
+            hasCritical = true;
+            break;
+          }
+        }
+        if (hasCritical) break;
+      }
+
+      if (v.cvss_score && typeof v.cvss_score === "number" && v.cvss_score >= 9) {
+        hasCritical = true;
+        break;
+      }
+    }
+
+    return { count, hasCritical };
+  } catch (e) {
+    return { count: 0, hasCritical: false };
+  }
+}
+
 export function analyzePackageLock(source: string): AnalyzeResult {
   const lockfile = parsePackageLockJson(source);
   const graph = buildDependencyGraph(lockfile);
 
   return computeImpactScores(graph);
+}
+
+export async function analyzePackageLockWithVulns(source: string): Promise<AnalyzeResult> {
+  const lockfile = parsePackageLockJson(source);
+  const graph = buildDependencyGraph(lockfile);
+
+  const result = computeImpactScores(graph);
+
+  // Enrich nodes with vulnerability info in parallel, but don't fail on errors.
+  await Promise.all(
+    result.nodes.map(async (node) => {
+      try {
+        const vuln = await fetchOsvVulnerabilities(node.id, node.version || undefined);
+        node.vulnerabilities = { count: vuln.count, hasCritical: vuln.hasCritical };
+      } catch (e) {
+        node.vulnerabilities = { count: 0, hasCritical: false };
+      }
+    }),
+  );
+
+  return result;
 }

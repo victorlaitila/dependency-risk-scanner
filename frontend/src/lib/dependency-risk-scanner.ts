@@ -14,6 +14,10 @@ export type AnalyzeNode = {
   version: string;
   impact: number;
   blastRadius: string[];
+  vulnerabilities?: {
+    count: number;
+    hasCritical: boolean;
+  };
 };
 
 export type AnalyzeEdge = {
