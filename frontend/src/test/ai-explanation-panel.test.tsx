@@ -1,10 +1,15 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi, afterEach } from "vitest";
+import { describe, expect, it, vi, afterEach, beforeEach } from "vitest";
 import { AIExplanationPanel } from "../components/ai-explanation-panel";
 
 describe("AIExplanationPanel", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_USE_MOCK_API", "false");
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it("does not render when no package is selected", () => {
@@ -15,7 +20,6 @@ describe("AIExplanationPanel", () => {
         impactScore={null}
         dependentsCount={0}
         depth={0}
-        apiBaseUrl="http://localhost:3001"
       />,
     );
 
@@ -37,7 +41,6 @@ describe("AIExplanationPanel", () => {
         impactScore={45}
         dependentsCount={5}
         depth={3}
-        apiBaseUrl="http://localhost:3001"
       />,
     );
 
@@ -68,7 +71,6 @@ describe("AIExplanationPanel", () => {
         impactScore={45}
         dependentsCount={5}
         depth={3}
-        apiBaseUrl="http://localhost:3001"
       />,
     );
 
@@ -90,7 +92,6 @@ describe("AIExplanationPanel", () => {
         impactScore={45}
         dependentsCount={5}
         depth={3}
-        apiBaseUrl="http://localhost:3001"
       />,
     );
 
@@ -114,12 +115,11 @@ describe("AIExplanationPanel", () => {
         impactScore={45}
         dependentsCount={5}
         depth={3}
-        apiBaseUrl="http://localhost:3001"
       />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Failed to generate explanation")).toBeInTheDocument();
+      expect(screen.getByText("Could not load explanation")).toBeInTheDocument();
     });
   });
 
@@ -135,12 +135,33 @@ describe("AIExplanationPanel", () => {
         impactScore={45}
         dependentsCount={5}
         depth={3}
-        apiBaseUrl="http://localhost:3001"
       />,
     );
 
     await waitFor(() => {
       expect(screen.getByText("Could not load explanation")).toBeInTheDocument();
+    });
+  });
+
+  it("uses demo mode placeholder explanation when enabled", async () => {
+    vi.stubEnv("VITE_USE_MOCK_API", "true");
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <AIExplanationPanel
+        packageName="lodash"
+        version="4.17.21"
+        impactScore={45}
+        dependentsCount={5}
+        depth={3}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Demo mode placeholder AI explanation/i)).toBeInTheDocument();
+      expect(fetchMock).not.toHaveBeenCalled();
     });
   });
 });

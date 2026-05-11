@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader, AlertCircle, Lightbulb } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { explainPackage } from "@/lib/api";
 
 interface AIExplanationPanelProps {
   packageName: string | null;
@@ -8,7 +9,6 @@ interface AIExplanationPanelProps {
   impactScore: number | null;
   dependentsCount: number;
   depth: number;
-  apiBaseUrl: string;
 }
 
 export const AIExplanationPanel = ({
@@ -17,7 +17,6 @@ export const AIExplanationPanel = ({
   impactScore,
   dependentsCount,
   depth,
-  apiBaseUrl,
 }: AIExplanationPanelProps) => {
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,24 +35,14 @@ export const AIExplanationPanel = ({
       setExplanation(null);
 
       try {
-        const response = await fetch(`${apiBaseUrl}/explain`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: packageName,
-            version,
-            impactScore,
-            dependentsCount,
-            depth,
-          }),
+        const data = await explainPackage({
+          name: packageName,
+          version,
+          impactScore,
+          dependentsCount,
+          depth,
         });
 
-        if (!response.ok) {
-          setError("Failed to generate explanation");
-          return;
-        }
-
-        const data = (await response.json()) as { explanation: string };
         setExplanation(data.explanation);
       } catch {
         setError("Could not load explanation");
@@ -63,7 +52,7 @@ export const AIExplanationPanel = ({
     };
 
     fetchExplanation();
-  }, [packageName, version, impactScore, dependentsCount, depth, apiBaseUrl]);
+  }, [packageName, version, impactScore, dependentsCount, depth]);
 
   if (!packageName) {
     return null;

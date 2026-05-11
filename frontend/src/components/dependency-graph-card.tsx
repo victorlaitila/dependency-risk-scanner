@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUpDown } from "lucide-react";
+import { isMockMode } from "@/lib/api";
 import {
   type GraphLayout,
   type PositionedEdge,
@@ -28,6 +29,20 @@ const DependencyGraphCard = ({
         <p className="text-sm text-muted-foreground">
           The graph shows how packages connect and which ones have the highest impact on your project.
         </p>
+        {graphLayout.nodes.length > 0 && isMockMode() && (
+          <p className="text-sm text-muted-foreground">
+            <span className="text-red-600">NOTE:</span> This live demo uses mock data. The production backend is intentionally disabled to avoid hosting costs; full functionality is available in the {" "}
+            <a
+              href="https://github.com/victorlaitila/dependency-risk-scanner"
+              target="_blank"
+              rel="noreferrer"
+              className="underline hover:text-foreground"
+            >
+              source code
+            </a>
+            .
+          </p>
+        )}
         <br />
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">

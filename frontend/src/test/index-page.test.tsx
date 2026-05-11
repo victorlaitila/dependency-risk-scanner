@@ -1,9 +1,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi, afterEach } from "vitest";
+import { describe, expect, it, vi, afterEach, beforeEach } from "vitest";
 import Index from "../pages/Index";
+
+beforeEach(() => {
+  vi.stubEnv("VITE_USE_MOCK_API", "false");
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 
 describe("Index", () => {
@@ -163,5 +168,25 @@ describe("Index", () => {
     fireEvent.click(highlightB);
     expect(highlightA).toHaveAttribute("aria-pressed", "false");
     expect(highlightB).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("uses mock data in demo mode", async () => {
+    vi.stubEnv("VITE_USE_MOCK_API", "true");
+
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { container } = render(<Index />);
+    const input = container.querySelector("input[type='file']") as HTMLInputElement;
+    const file = new File(["{}"], "package-lock.json", { type: "application/json" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/this live demo uses mock data/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Highlight react" })).toBeInTheDocument();
+      expect(screen.getByText("18.3.1")).toBeInTheDocument();
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
   });
 });

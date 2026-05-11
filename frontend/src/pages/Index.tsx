@@ -4,6 +4,7 @@ import DependencyGraphCard from "@/components/dependency-graph-card";
 import RiskTableCard from "@/components/risk-table-card";
 import UploadLockfileCard from "@/components/upload-lockfile-card";
 import { AIExplanationPanel } from "@/components/ai-explanation-panel";
+import { analyzeLockfile } from "@/lib/api";
 import {
   buildGraphLayout,
   edgeOpacityForHighlight,
@@ -11,11 +12,8 @@ import {
   nodeOpacityForHighlight,
   type AnalyzeEdge,
   type AnalyzeNode,
-  type AnalyzeResponse,
   type PositionedEdge,
 } from "@/lib/dependency-risk-scanner";
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001").replace(/\/$/, "");
 
 const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,19 +42,7 @@ const Index = () => {
     setSelectedNodeId(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch(`${API_BASE_URL}/analyze`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to analyze lockfile.");
-      }
-
-      const data = (await response.json()) as AnalyzeResponse;
+      const data = await analyzeLockfile(file);
 
       setNodes(data.nodes ?? []);
       setEdges(data.edges ?? []);
@@ -176,7 +162,6 @@ const Index = () => {
             impactScore={selectedNode?.impact ?? null}
             dependentsCount={selectedNode?.blastRadius.length ?? 0}
             depth={selectedNodeDepth}
-            apiBaseUrl={API_BASE_URL}
           />
         )}
         <RiskTableCard

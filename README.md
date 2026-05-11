@@ -3,26 +3,28 @@
 Dependency Risk Scanner is a full-stack app for analyzing dependency impact from a `package-lock.json` file.
 It visualizes the dependency graph, highlights high-impact packages, and provides contextual AI explanations for why a package matters in the tree.
 
-Note: the app does not perform CVE or vulnerability database lookups.
-The risk view is based on graph-derived impact metrics, and the AI explanation feature only describes those metrics.
+The core risk score is based on graph-derived impact metrics. In addition, the app fetches known vulnerability metadata per package/version to provide a separate informational security dimension.
 
 ## Highlights
 
 - Upload a `package-lock.json` and analyze it in the browser
 - Visual dependency graph with impact-based sizing and coloring
 - Searchable risk table with package highlighting
+- Vulnerability metadata per package (count + critical flag)
 - Optional AI explanation panel for contextual, non-security-specific reasoning
 - Deterministic fallback when AI is unavailable
+- Frontend mock mode for demos that should not call the backend
 
 ## Architecture
 
 - Frontend: React + TypeScript + Tailwind (Vite)
 - Backend: Node.js + TypeScript + Fastify
 - AI: Hugging Face chat-completions API with deterministic fallback
+- Vulnerabilities: OSV.dev query API
 - Flow:
   - Upload `package-lock.json` from the UI
   - `POST /analyze` to backend
-  - Backend builds dependency graph and computes impact
+  - Backend builds dependency graph, computes impact, and enriches packages with vulnerability metadata
   - UI updates graph placeholder and risk table from API response
 
 ## Run Locally
@@ -51,9 +53,18 @@ You can configure the backend URL used by the frontend by creating `frontend/.en
 
 ```bash
 VITE_API_BASE_URL=http://localhost:3001
+VITE_USE_MOCK_API=false
 ```
 
 An example file is included at `frontend/.env.example`.
+
+For a live demo that does not call the backend, enable mock mode:
+
+```bash
+VITE_USE_MOCK_API=true
+```
+
+In mock mode, the UI uses mock analysis data and placeholder AI explanations, with no backend requests.
 
 ### 3. Backend Environment (optional)
 
@@ -91,14 +102,28 @@ curl -X POST http://localhost:3001/analyze \
 ```json
 {
   "nodes": [
-    { "id": "lodash", "version": "4.17.21", "impact": 4.5, "blastRadius": ["app"] },
-    { "id": "minimist", "version": "1.2.8", "impact": 1, "blastRadius": [] }
+    {
+      "id": "lodash",
+      "version": "4.17.21",
+      "impact": 4.5,
+      "blastRadius": ["app"],
+      "vulnerabilities": { "count": 2, "hasCritical": false }
+    },
+    {
+      "id": "minimist",
+      "version": "1.2.8",
+      "impact": 1,
+      "blastRadius": [],
+      "vulnerabilities": { "count": 0, "hasCritical": false }
+    }
   ],
   "edges": [
     { "from": "lodash", "to": "minimist" }
   ]
 }
 ```
+
+`vulnerabilities` is informational and does not alter the `impact` score.
 
 ### AI Risk Explanation
 
@@ -161,11 +186,14 @@ An example file is included at `backend/.env.example`.
 - Blast radius computation (transitive dependents)
 - Impact score calculation: `downstream_count / (depth + 1)`
 - Risk table populated from real API response
+- Vulnerability metadata lookup from OSV.dev (count + critical flag)
 - **AI Risk Explanation**: Natural language explanations of why packages are risky based on structural impact data (with deterministic fallback)
+- Frontend mock mode for reliable demos without backend/network dependence
 
 ## Notes
 
-- The app is intentionally focused on dependency structure, not vulnerability scanning.
+- The risk score remains intentionally focused on dependency structure.
+- Vulnerability metadata is presented as a separate informational dimension.
 - AI output is explanatory only and does not change graph metrics or risk scores.
 - The backend keeps file upload limits and origin allowlisting in place for basic safety.
 

@@ -42,7 +42,7 @@ const UploadLockfileCard = ({
         onDrop={onDrop}
         className="flex h-28 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-input transition-colors hover:border-muted-foreground hover:bg-muted/40"
       >
-        <Upload className="h-5 w-5 text-muted-foreground" />
+        <Upload className="h-5 w-5 text-red-600" />
         <p className="px-2 text-center text-sm text-muted-foreground">
           {isLoading ? (
             "Analyzing package-lock.json..."

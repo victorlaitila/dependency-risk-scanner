@@ -1,5 +1,4 @@
 import { SYSTEM_PROMPT, USER_PROMPT_TEMPLATE } from "./ai-explanation-prompts.js";
-import { featureFlags } from "./feature-flags.js";
 
 const DEFAULT_HUGGINGFACE_MODEL_ID = "openai/gpt-oss-120b:fastest";
 const MAX_EXPLANATION_LENGTH = 260;
@@ -61,14 +60,14 @@ function formatExplanation(rawText: string): string {
 }
 
 export async function getExplanation(req: ExplanationRequest): Promise<ExplanationResponse> {
-  if (!featureFlags.aiExplanationsEnabled()) {
+  const apiKey = process.env.HUGGINGFACE_API_KEY;
+  if (!apiKey) {
     return {
       explanation: generateFallbackExplanation(req),
     };
   }
 
   try {
-    const apiKey = process.env.HUGGINGFACE_API_KEY;
     const modelId = process.env.HUGGINGFACE_MODEL_ID?.trim() || DEFAULT_HUGGINGFACE_MODEL_ID;
     const userPrompt = USER_PROMPT_TEMPLATE(req.name, req.version, req.impactScore, req.dependentsCount, req.depth);
     const response = await fetch("https://router.huggingface.co/v1/chat/completions", {
