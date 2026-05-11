@@ -54,6 +54,7 @@ You can configure the backend URL used by the frontend by creating `frontend/.en
 ```bash
 VITE_API_BASE_URL=http://localhost:3001
 VITE_USE_MOCK_API=false
+VITE_BASE_PATH=/
 ```
 
 An example file is included at `frontend/.env.example`.
