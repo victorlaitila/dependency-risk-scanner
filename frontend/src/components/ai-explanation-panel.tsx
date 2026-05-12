@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader, AlertCircle, Lightbulb } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { explainPackage } from "@/lib/api";
+import { strings } from "@/lib/strings";
 
 interface AIExplanationPanelProps {
   packageName: string | null;
@@ -45,7 +46,7 @@ export const AIExplanationPanel = ({
 
         setExplanation(data.explanation);
       } catch {
-        setError("Could not load explanation");
+        setError(strings.aiExplanationPanel.error);
       } finally {
         setIsLoading(false);
       }
@@ -63,14 +64,14 @@ export const AIExplanationPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-sm font-medium">
           <Lightbulb className="h-4 w-4 text-amber-500 dark:text-amber-400" />
-          AI Risk Explanation
+          {strings.aiExplanationPanel.title}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader className="h-4 w-4 animate-spin" />
-            Analyzing package...
+            {strings.aiExplanationPanel.loading}
           </div>
         )}
         {error && (

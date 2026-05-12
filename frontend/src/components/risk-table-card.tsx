@@ -15,6 +15,7 @@ import {
   riskLevel,
   type AnalyzeNode,
 } from "@/lib/dependency-risk-scanner";
+import { strings } from "@/lib/strings";
 
 type RiskTableCardProps = {
   sortedNodes: AnalyzeNode[];
@@ -63,11 +64,9 @@ const RiskTableCard = ({
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-destructive" />
-          <CardTitle className="text-sm font-medium">Top Impact Packages</CardTitle>
+          <CardTitle className="text-sm font-medium">{strings.riskTableCard.title}</CardTitle>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Packages with the highest dependency impact in your graph
-        </p>
+        <p className="text-sm text-muted-foreground">{strings.riskTableCard.description}</p>
       </CardHeader>
       <CardContent>
         {sortedNodes.length > 0 && (
@@ -75,46 +74,46 @@ const RiskTableCard = ({
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search packages"
-              aria-label="Search packages"
+              placeholder={strings.riskTableCard.searchPlaceholder}
+              aria-label={strings.riskTableCard.searchAriaLabel}
               className="h-9 w-full rounded-md border border-input bg-muted/50 px-3 pr-9 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
             <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           </div>
         )}
-        <Table className="table-fixed">
+        <Table className="table-fixed min-w-[880px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[220px]">Package</TableHead>
-              <TableHead className="w-[100px]">Version</TableHead>
+              <TableHead className="w-[220px]">{strings.riskTableCard.headers.package}</TableHead>
+              <TableHead className="w-[100px]">{strings.riskTableCard.headers.version}</TableHead>
               <TableHead className="w-[80px]">
                 <div className="flex items-center gap-1.5">
-                  Risk
-                  <Tooltip content="Relative impact tier derived from dependency graph position and reach">
+                  {strings.riskTableCard.headers.risk}
+                  <Tooltip content={strings.riskTableCard.headers.riskTooltip}>
                     <HelpCircle className="h-4 w-4 cursor-help text-red-500/60 hover:text-red-500/80" />
                   </Tooltip>
                 </div>
               </TableHead>
               <TableHead className="w-[140px]">
                 <div className="flex items-center gap-1.5">
-                  Reason
-                  <Tooltip content="Impact score estimates how many packages are affected if this package changes">
+                  {strings.riskTableCard.headers.reason}
+                  <Tooltip content={strings.riskTableCard.headers.reasonTooltip}>
                     <HelpCircle className="h-4 w-4 cursor-help text-red-500/60 hover:text-red-500/80" />
                   </Tooltip>
                 </div>
               </TableHead>
               <TableHead className="w-[120px]">
                 <div className="flex items-center gap-1.5">
-                  Vulnerabilities
-                  <Tooltip content="Number of known vulnerabilities for this exact package version (informational)">
+                  {strings.riskTableCard.headers.vulnerabilities}
+                  <Tooltip content={strings.riskTableCard.headers.vulnerabilitiesTooltip}>
                     <HelpCircle className="h-4 w-4 cursor-help text-red-500/60 hover:text-red-500/80" />
                   </Tooltip>
                 </div>
               </TableHead>
               <TableHead className="w-[100px] text-right">
                 <div className="flex items-center justify-end gap-1.5">
-                  Highlight
-                  <Tooltip content="Click to highlight this package and all packages that depend on it in the dependency graph">
+                  {strings.riskTableCard.headers.highlight}
+                  <Tooltip content={strings.riskTableCard.headers.highlightTooltip}>
                     <HelpCircle className="h-4 w-4 cursor-help text-red-500/60 hover:text-red-500/80" />
                   </Tooltip>
                 </div>
@@ -125,7 +124,7 @@ const RiskTableCard = ({
             {sortedNodes.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell colSpan={6} className="h-24 text-center text-sm text-muted-foreground">
-                  Upload a package-lock.json to populate this table
+                  {strings.riskTableCard.emptyTable}
                 </TableCell>
               </TableRow>
             ) : (
@@ -144,7 +143,7 @@ const RiskTableCard = ({
                     </span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    Impact score: {node.impact.toFixed(2)}
+                    {strings.riskTableCard.impactScorePrefix}{node.impact.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {node.vulnerabilities?.count ? (
@@ -153,14 +152,14 @@ const RiskTableCard = ({
                         {node.vulnerabilities.hasCritical && <span className="ml-1 text-xs">⚠</span>}
                       </span>
                     ) : (
-                      <span className="text-sm text-muted-foreground">None</span>
+                      <span className="text-sm text-muted-foreground">{strings.riskTableCard.vulnerabilitiesNone}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
                     <button
                       type="button"
                       onClick={() => onHighlightClick(node.id)}
-                      aria-label={`Highlight ${node.id}`}
+                      aria-label={`${strings.riskTableCard.highlightAriaLabelPrefix}${node.id}`}
                       aria-pressed={activeNodeId === node.id}
                       className={`inline-flex items-center rounded-md border px-2 py-1 text-xs transition-colors ${
                         activeNodeId === node.id
@@ -168,7 +167,7 @@ const RiskTableCard = ({
                           : "border-input text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                     >
-                      Highlight
+                      {strings.riskTableCard.headers.highlight}
                     </button>
                   </TableCell>
                 </TableRow>
@@ -178,7 +177,7 @@ const RiskTableCard = ({
         </Table>
           {showNoMatches && (
             <div className="mt-3 flex h-24 items-center justify-center">
-              <p className="px-4 text-center text-sm text-muted-foreground">No packages found</p>
+              <p className="px-4 text-center text-sm text-muted-foreground">{strings.riskTableCard.noMatches}</p>
             </div>
           )}
 
@@ -186,7 +185,7 @@ const RiskTableCard = ({
           <button
             type="button"
             onClick={handleScrollToTableTop}
-            aria-label="Scroll to top of risk table"
+            aria-label={strings.riskTableCard.scrollToTopAriaLabel}
             className="fixed bottom-6 left-1/2 z-40 inline-flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-white/20 bg-background/70 text-muted-foreground shadow-lg shadow-black/10 backdrop-blur-md transition-colors hover:bg-background/90 hover:text-foreground"
           >
             <ChevronUp className="h-4 w-4" />

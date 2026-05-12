@@ -1,0 +1,67 @@
+{
+  "app": {
+    "title": "Dependency Risk Scanner"
+  },
+  "uploadLockfileCard": {
+    "title": "Upload Lockfile",
+    "description": "Upload your package-lock.json file to analyze dependency impact",
+    "analyzing": "Analyzing package-lock.json...",
+    "analyzedSuffix": " analyzed. Click or drop to replace it.",
+    "promptPrefix": "Click or drop your ",
+    "promptPackageLockfile": "package-lock.json",
+    "error": "Analysis failed. Please upload a valid package-lock.json file."
+  },
+  "dependencyGraphCard": {
+    "title": "Dependency Graph",
+    "description": "The graph shows how packages connect and which ones have the highest impact on your project.",
+    "mockModeNotePrefix": "NOTE:",
+    "mockModeNote": "This live demo uses mock data. The production backend is intentionally disabled to avoid hosting costs.",
+    "mockModeNoteSuffix": "Full functionality is available in the source code.",
+    "sourceCodeLink": "source code",
+    "higherImpact": "Higher impact",
+    "lowerImpact": "Lower impact",
+    "largerNode": "Larger node = more impact",
+    "emptyState": "Graph visualization will render here after analysis",
+    "selectionPrefix": "Selected",
+    "selectionSuffix": "affected packages:"
+  },
+  "riskTableCard": {
+    "title": "Top Impact Packages",
+    "description": "Packages with the highest dependency impact in your graph",
+    "searchPlaceholder": "Search packages",
+    "searchAriaLabel": "Search packages",
+    "headers": {
+      "package": "Package",
+      "version": "Version",
+      "risk": "Risk",
+      "riskTooltip": "Relative impact tier derived from dependency graph position and reach",
+      "reason": "Reason",
+      "reasonTooltip": "Impact score estimates how many packages are affected if this package changes",
+      "vulnerabilities": "Vulnerabilities",
+      "vulnerabilitiesTooltip": "Number of known vulnerabilities for this exact package version (informational)",
+      "highlight": "Highlight",
+      "highlightTooltip": "Click to highlight this package and all packages that depend on it in the dependency graph"
+    },
+    "emptyTable": "Upload a package-lock.json to populate this table",
+    "noMatches": "No packages found",
+    "highlightAriaLabelPrefix": "Highlight ",
+    "impactScorePrefix": "Impact score: ",
+    "vulnerabilitiesNone": "None",
+    "scrollToTopAriaLabel": "Scroll to top of risk table"
+  },
+  "aiExplanationPanel": {
+    "title": "AI Risk Explanation",
+    "loading": "Analyzing package...",
+    "error": "Could not load explanation"
+  },
+  "mockApi": {
+    "demoLockfileName": "package-lock.json",
+    "placeholderExplanation": "Demo mode placeholder AI explanation.",
+    "placeholderBackendHint": "For real AI behavior, run the backend locally.",
+    "packagePrefix": "• Package: ",
+    "versionPrefix": "• Version: ",
+    "impactScorePrefix": "• Impact score: ",
+    "directDependentsPrefix": "• Direct dependents: ",
+    "depthPrefix": "• Depth: "
+  }
+}

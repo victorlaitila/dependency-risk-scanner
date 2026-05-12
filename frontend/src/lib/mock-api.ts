@@ -1,6 +1,7 @@
 import type { AnalyzeResponse } from "@/lib/dependency-risk-scanner";
+import { strings } from "@/lib/strings";
 
-export const DEMO_LOCKFILE_NAME = "package-lock.json";
+export const DEMO_LOCKFILE_NAME = strings.mockApi.demoLockfileName;
 
 const MOCK_ANALYZE_RESPONSE: AnalyzeResponse = {
   nodes: [
@@ -123,13 +124,13 @@ export async function mockExplainPackage(params: {
   await delay(250);
 
   const explanation = [
-    "Demo mode placeholder AI explanation.",
-    "For real AI behavior, run the backend locally.",
-    `• Package: ${params.name}`,
-    `• Version: ${params.version}`,
-    `• Impact score: ${params.impactScore.toFixed(2)}`,
-    `• Direct dependents: ${params.dependentsCount}`,
-    `• Depth: ${params.depth}`,
+    strings.mockApi.placeholderExplanation,
+    strings.mockApi.placeholderBackendHint,
+    `${strings.mockApi.packagePrefix}${params.name}`,
+    `${strings.mockApi.versionPrefix}${params.version}`,
+    `${strings.mockApi.impactScorePrefix}${params.impactScore.toFixed(2)}`,
+    `${strings.mockApi.directDependentsPrefix}${params.dependentsCount}`,
+    `${strings.mockApi.depthPrefix}${params.depth}`,
   ].join("\n");
 
   return { explanation };

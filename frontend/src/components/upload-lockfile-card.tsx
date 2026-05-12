@@ -1,6 +1,7 @@
 import { Upload } from "lucide-react";
 import { type ChangeEvent, type DragEvent, type RefObject } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { strings } from "@/lib/strings";
 
 type UploadLockfileCardProps = {
   fileInputRef: RefObject<HTMLInputElement | null>;
@@ -23,10 +24,8 @@ const UploadLockfileCard = ({
 }: UploadLockfileCardProps) => (
   <Card>
     <CardHeader className="pb-3">
-      <CardTitle className="text-sm font-medium">Upload Lockfile</CardTitle>
-      <p className="text-sm text-muted-foreground">
-        Upload your package-lock.json file to analyze dependency impact
-      </p>
+      <CardTitle className="text-sm font-medium">{strings.uploadLockfileCard.title}</CardTitle>
+      <p className="text-sm text-muted-foreground">{strings.uploadLockfileCard.description}</p>
     </CardHeader>
     <CardContent>
       <input
@@ -45,16 +44,16 @@ const UploadLockfileCard = ({
         <Upload className="h-5 w-5 text-red-600" />
         <p className="px-2 text-center text-sm text-muted-foreground">
           {isLoading ? (
-            "Analyzing package-lock.json..."
+            strings.uploadLockfileCard.analyzing
           ) : fileName ? (
             <>
               <span className="font-medium text-foreground">{fileName}</span>
-              <span> analyzed. Click or drop to replace it.</span>
+              <span>{strings.uploadLockfileCard.analyzedSuffix}</span>
             </>
           ) : (
             <>
-              <span>Click or drop your </span>
-              <span className="font-medium text-foreground">package-lock.json</span>
+              <span>{strings.uploadLockfileCard.promptPrefix}</span>
+              <span className="font-medium text-foreground">{strings.uploadLockfileCard.promptPackageLockfile}</span>
             </>
           )}
         </p>

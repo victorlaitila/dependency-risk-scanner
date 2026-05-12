@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUpDown } from "lucide-react";
 import { isMockMode } from "@/lib/api";
+import { strings } from "@/lib/strings";
 import {
   type GraphLayout,
   type PositionedEdge,
@@ -25,20 +26,19 @@ const DependencyGraphCard = ({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">Dependency Graph</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          The graph shows how packages connect and which ones have the highest impact on your project.
-        </p>
+        <CardTitle className="text-sm font-medium">{strings.dependencyGraphCard.title}</CardTitle>
+        <p className="text-sm text-muted-foreground">{strings.dependencyGraphCard.description}</p>
         {graphLayout.nodes.length > 0 && isMockMode() && (
           <p className="text-sm text-muted-foreground">
-            <span className="text-red-600">NOTE:</span> This live demo uses mock data. The production backend is intentionally disabled to avoid hosting costs; full functionality is available in the {" "}
+            <span className="text-red-600">{strings.dependencyGraphCard.mockModeNotePrefix}</span>{" "}
+            {strings.dependencyGraphCard.mockModeNote} {strings.dependencyGraphCard.mockModeNoteSuffix}{" "}
             <a
               href="https://github.com/victorlaitila/dependency-risk-scanner"
               target="_blank"
               rel="noreferrer"
               className="underline hover:text-foreground"
             >
-              source code
+              {strings.dependencyGraphCard.sourceCodeLink}
             </a>
             .
           </p>
@@ -47,15 +47,15 @@ const DependencyGraphCard = ({
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-red-600" />
-            Higher impact
+            {strings.dependencyGraphCard.higherImpact}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-slate-400" />
-            Lower impact
+            {strings.dependencyGraphCard.lowerImpact}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full border border-foreground/50" />
-            Larger node = more impact
+            {strings.dependencyGraphCard.largerNode}
           </span>
         </div>
       </CardHeader>
@@ -65,7 +65,7 @@ const DependencyGraphCard = ({
             <div className="flex flex-col items-center gap-3">
               <TrendingUpDown className="h-12 w-12 text-red-600/40" />
               <p className="px-4 text-center text-sm text-muted-foreground">
-                Graph visualization will render here after analysis
+                {strings.dependencyGraphCard.emptyState}
               </p>
             </div>
           ) : (
@@ -102,7 +102,7 @@ const DependencyGraphCard = ({
       </div>
         {activeNodeId && (
           <p className="mt-3 text-xs text-muted-foreground">
-            Selected <span className="font-mono text-foreground">{activeNodeId}</span>, affected packages: {highlightedCount}
+            {strings.dependencyGraphCard.selectionPrefix} <span className="font-mono text-foreground">{activeNodeId}</span>, {strings.dependencyGraphCard.selectionSuffix} {highlightedCount}
           </p>
         )}
       </CardContent>

@@ -5,6 +5,7 @@ import RiskTableCard from "@/components/risk-table-card";
 import UploadLockfileCard from "@/components/upload-lockfile-card";
 import { AIExplanationPanel } from "@/components/ai-explanation-panel";
 import { analyzeLockfile } from "@/lib/api";
+import { strings } from "@/lib/strings";
 import {
   buildGraphLayout,
   edgeOpacityForHighlight,
@@ -49,7 +50,7 @@ const Index = () => {
     } catch {
       setNodes([]);
       setEdges([]);
-      setError("Analysis failed. Please upload a valid package-lock.json file.");
+      setError(strings.uploadLockfileCard.error);
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +134,7 @@ const Index = () => {
         <div className="mx-auto flex max-w-5xl items-center gap-2">
           <Package className="h-5 w-5 text-foreground text-red-600" />
           <h1 className="text-lg font-semibold tracking-tight text-foreground">
-            Dependency Risk Scanner
+            {strings.app.title}
           </h1>
         </div>
       </header>
