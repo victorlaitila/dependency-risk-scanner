@@ -130,14 +130,17 @@ describe("Index", () => {
 
     fireEvent.change(input, { target: { files: [file] } });
 
-    const detailsButton = await screen.findByRole("button", {
-      name: "View vulnerability details for pkg-vuln",
+    const highlightButton = await screen.findByRole("button", {
+      name: "Highlight pkg-vuln",
     });
 
-    fireEvent.click(detailsButton);
+    fireEvent.click(highlightButton);
 
+    expect(await screen.findByText("AI Risk Explanation")).toBeInTheDocument();
     expect(screen.getByText("Vulnerability details")).toBeInTheDocument();
+    expect(screen.getByText("Advisory ID")).toBeInTheDocument();
     expect(screen.getByText("GHSA-test-1234")).toBeInTheDocument();
+    expect(screen.getByText("Severity")).toBeInTheDocument();
     expect(screen.getByText("Critical")).toBeInTheDocument();
     expect(screen.getByText("Example advisory summary.")).toBeInTheDocument();
     expect(screen.getByText(/>= 1\.0\.0, < 1\.0\.1/)).toBeInTheDocument();

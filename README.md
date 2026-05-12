@@ -10,7 +10,7 @@ The core risk score is based on graph-derived impact metrics. In addition, the a
 - Upload a `package-lock.json` and analyze it in the browser
 - Visual dependency graph with impact-based sizing and coloring
 - Searchable risk table with package highlighting
-- Vulnerability metadata per package (count + critical flag)
+- Vulnerability metadata per package with structured advisory details
 - Optional AI explanation panel for contextual, non-security-specific reasoning
 - Deterministic fallback when AI is unavailable
 - Frontend mock mode for demos that should not call the backend
@@ -26,6 +26,7 @@ The core risk score is based on graph-derived impact metrics. In addition, the a
   - `POST /analyze` to backend
   - Backend builds dependency graph, computes impact, and enriches packages with vulnerability metadata
   - UI updates graph placeholder and risk table from API response
+  - Selecting a package surfaces the AI explanation and any vulnerability details in the same panel
 
 ## Run Locally
 
@@ -108,7 +109,11 @@ curl -X POST http://localhost:3001/analyze \
       "version": "4.17.21",
       "impact": 4.5,
       "blastRadius": ["app"],
-      "vulnerabilities": { "count": 2, "hasCritical": false }
+      "vulnerabilities": {
+        "count": 2,
+        "hasCritical": false,
+        "details": []
+      }
     },
     {
       "id": "minimist",
@@ -124,7 +129,7 @@ curl -X POST http://localhost:3001/analyze \
 }
 ```
 
-`vulnerabilities` is informational and does not alter the `impact` score.
+`vulnerabilities` is informational and does not alter the `impact` score. When present, it includes structured advisory details used by the UI.
 
 ### AI Risk Explanation
 
@@ -187,7 +192,7 @@ An example file is included at `backend/.env.example`.
 - Blast radius computation (transitive dependents)
 - Impact score calculation: `downstream_count / (depth + 1)`
 - Risk table populated from real API response
-- Vulnerability metadata lookup from OSV.dev (count + critical flag)
+- Vulnerability metadata lookup from OSV.dev with structured advisory details
 - **AI Risk Explanation**: Natural language explanations of why packages are risky based on structural impact data (with deterministic fallback)
 - Frontend mock mode for reliable demos without backend/network dependence
 
