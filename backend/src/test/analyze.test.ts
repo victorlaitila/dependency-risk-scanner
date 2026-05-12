@@ -1,6 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import multipart from "@fastify/multipart";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { analyzeRoute } from "../routes/analyze.js";
 
 function buildMultipartFilePayload(params: {
@@ -46,7 +46,18 @@ async function buildApp(maxFileSize: number): Promise<FastifyInstance> {
 describe("POST /analyze", () => {
   const apps: FastifyInstance[] = [];
 
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ vulns: [] }),
+      }),
+    );
+  });
+
   afterEach(async () => {
+    vi.unstubAllGlobals();
     while (apps.length > 0) {
       const app = apps.pop();
       if (app) {

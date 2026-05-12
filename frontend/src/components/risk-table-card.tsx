@@ -147,9 +147,12 @@ const RiskTableCard = ({
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {node.vulnerabilities?.count ? (
-                      <span className={`inline-flex items-center gap-2 rounded-md px-2 py-0.5 text-sm font-medium ${node.vulnerabilities?.hasCritical ? "bg-red-600 text-white" : "bg-amber-100 text-amber-800"}`}>
-                        {node.vulnerabilities.count}
-                        {node.vulnerabilities.hasCritical && <span className="ml-1 text-xs">⚠</span>}
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-sm font-medium ${node.vulnerabilities?.hasCritical ? "bg-red-600 text-white" : "bg-amber-100 text-amber-800"}`}
+                      >
+                        <span className="rounded-full bg-background/20 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-current">
+                          {node.vulnerabilities.count}
+                        </span>
                       </span>
                     ) : (
                       <span className="text-sm text-muted-foreground">{strings.riskTableCard.vulnerabilitiesNone}</span>

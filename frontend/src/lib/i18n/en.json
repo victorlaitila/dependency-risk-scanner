@@ -16,7 +16,7 @@
     "description": "The graph shows how packages connect and which ones have the highest impact on your project.",
     "mockModeNotePrefix": "NOTE:",
     "mockModeNote": "This live demo uses mock data. The production backend is intentionally disabled to avoid hosting costs.",
-    "mockModeNoteSuffix": "Full functionality is available in the source code.",
+    "mockModeNoteSuffix": "Full functionality is available in the ",
     "sourceCodeLink": "source code",
     "higherImpact": "Higher impact",
     "lowerImpact": "Lower impact",
@@ -30,6 +30,20 @@
     "description": "Packages with the highest dependency impact in your graph",
     "searchPlaceholder": "Search packages",
     "searchAriaLabel": "Search packages",
+    "viewDetails": "View details",
+    "hideDetails": "Hide details",
+    "vulnerabilityDetailsTitle": "Vulnerability details",
+    "advisoryIdLabel": "Advisory ID",
+    "severityLabel": "Severity",
+    "summaryLabel": "Summary",
+    "affectedRangeLabel": "Affected range",
+    "fixedVersionLabel": "Fixed version",
+    "sourceLabel": "Source",
+    "sourceUnavailable": "Not available",
+    "summaryUnavailable": "No summary available.",
+    "valueUnavailable": "Not available",
+    "detailsUnavailable": "No structured vulnerability details available.",
+    "vulnerabilityDetailsAriaLabelPrefix": "View vulnerability details for ",
     "headers": {
       "package": "Package",
       "version": "Version",
@@ -38,15 +52,21 @@
       "reason": "Reason",
       "reasonTooltip": "Impact score estimates how many packages are affected if this package changes",
       "vulnerabilities": "Vulnerabilities",
-      "vulnerabilitiesTooltip": "Number of known vulnerabilities for this exact package version (informational)",
+      "vulnerabilitiesTooltip": "Number of known vulnerabilities for this exact package version",
       "highlight": "Highlight",
-      "highlightTooltip": "Click to highlight this package and all packages that depend on it in the dependency graph"
+      "highlightTooltip": "Highlight this package and dependents in the graph; shows vulnerability details and AI analysis"
     },
     "emptyTable": "Upload a package-lock.json to populate this table",
     "noMatches": "No packages found",
     "highlightAriaLabelPrefix": "Highlight ",
     "impactScorePrefix": "Impact score: ",
     "vulnerabilitiesNone": "None",
+    "severityLevels": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
     "scrollToTopAriaLabel": "Scroll to top of risk table"
   },
   "aiExplanationPanel": {

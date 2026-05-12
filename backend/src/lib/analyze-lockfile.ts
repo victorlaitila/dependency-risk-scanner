@@ -6,7 +6,19 @@ export type GraphNode = {
   vulnerabilities?: {
     count: number;
     hasCritical: boolean;
+    details: VulnerabilityDetail[];
   };
+};
+
+export type VulnerabilitySeverity = "low" | "medium" | "high" | "critical";
+
+export type VulnerabilityDetail = {
+  id: string;
+  severity: VulnerabilitySeverity;
+  summary: string;
+  affectedRange: string;
+  fixedVersion: string | null;
+  sourceUrl: string | null;
 };
 
 export type GraphEdge = {
@@ -35,6 +47,43 @@ type MutableGraph = {
   adjacency: Map<string, Set<string>>;
   depthByNode: Map<string, number>;
   versionByNode: Map<string, string>;
+};
+
+type OsvReference = {
+  type?: string;
+  url?: string;
+};
+
+type OsvRangeEvent = {
+  introduced?: string;
+  fixed?: string;
+  last_affected?: string;
+  limit?: string;
+};
+
+type OsvAffectedRange = {
+  type?: string;
+  events?: OsvRangeEvent[];
+};
+
+type OsvAffectedPackage = {
+  package?: {
+    name?: string;
+    ecosystem?: string;
+  };
+  ranges?: OsvAffectedRange[];
+};
+
+type OsvVulnerability = {
+  id?: string;
+  summary?: string;
+  severity?: Array<{ type?: string; score?: string | number } | string> | string;
+  affected?: OsvAffectedPackage[];
+  references?: OsvReference[];
+  database_specific?: {
+    source?: string;
+    url?: string;
+  };
 };
 
 function ensureNode(graph: MutableGraph, node: string): void {
@@ -95,6 +144,181 @@ function addEdge(graph: MutableGraph, from: string, to: string): void {
   ensureNode(graph, from);
   ensureNode(graph, to);
   graph.adjacency.get(from)?.add(to);
+}
+
+function severityFromScore(score: number): VulnerabilitySeverity {
+  if (score >= 9) {
+    return "critical";
+  }
+
+  if (score >= 7) {
+    return "high";
+  }
+
+  if (score >= 4) {
+    return "medium";
+  }
+
+  return "low";
+}
+
+function normalizeSeverity(severity: OsvVulnerability["severity"]): VulnerabilitySeverity {
+  const entries = Array.isArray(severity) ? severity : severity ? [severity] : [];
+
+  for (const entry of entries) {
+    if (typeof entry === "string") {
+      const lower = entry.toLowerCase();
+
+      if (lower.includes("critical")) {
+        return "critical";
+      }
+
+      if (lower.includes("high")) {
+        return "high";
+      }
+
+      if (lower.includes("medium")) {
+        return "medium";
+      }
+
+      if (lower.includes("low")) {
+        return "low";
+      }
+
+      const score = Number(entry);
+      if (!Number.isNaN(score)) {
+        return severityFromScore(score);
+      }
+
+      continue;
+    }
+
+    if (typeof entry === "object" && entry !== null) {
+      const rawScore = entry.score;
+      const score = Number(rawScore);
+
+      if (!Number.isNaN(score)) {
+        return severityFromScore(score);
+      }
+
+      const lowerType = entry.type?.toLowerCase();
+      if (lowerType?.includes("critical")) {
+        return "critical";
+      }
+
+      if (lowerType?.includes("high")) {
+        return "high";
+      }
+
+      if (lowerType?.includes("medium")) {
+        return "medium";
+      }
+
+      if (lowerType?.includes("low")) {
+        return "low";
+      }
+    }
+  }
+
+  return "medium";
+}
+
+function formatRangeEvents(events: OsvRangeEvent[] | undefined): { affectedRange: string; fixedVersion: string | null } {
+  if (!events || events.length === 0) {
+    return { affectedRange: "Not available", fixedVersion: null };
+  }
+
+  let introduced: string | null = null;
+  let fixedVersion: string | null = null;
+  let lastAffected: string | null = null;
+  let limit: string | null = null;
+
+  for (const event of events) {
+    if (typeof event.introduced === "string") {
+      introduced = event.introduced;
+    }
+
+    if (typeof event.fixed === "string") {
+      fixedVersion = fixedVersion ?? event.fixed;
+    }
+
+    if (typeof event.last_affected === "string") {
+      lastAffected = event.last_affected;
+    }
+
+    if (typeof event.limit === "string") {
+      limit = event.limit;
+    }
+  }
+
+  const rangeParts: string[] = [];
+
+  if (introduced) {
+    rangeParts.push(`>= ${introduced}`);
+  }
+
+  if (fixedVersion) {
+    rangeParts.push(`< ${fixedVersion}`);
+  } else if (lastAffected) {
+    rangeParts.push(`<= ${lastAffected}`);
+  } else if (limit) {
+    rangeParts.push(`< ${limit}`);
+  }
+
+  if (rangeParts.length === 0) {
+    return { affectedRange: "Not available", fixedVersion };
+  }
+
+  return { affectedRange: rangeParts.join(", "), fixedVersion };
+}
+
+function formatAffectedRange(vulnerability: OsvVulnerability): { affectedRange: string; fixedVersion: string | null } {
+  const ranges = vulnerability.affected?.flatMap((affected) => affected.ranges ?? []) ?? [];
+
+  if (ranges.length === 0) {
+    return { affectedRange: "Not available", fixedVersion: null };
+  }
+
+  const formattedRanges: string[] = [];
+  let fixedVersion: string | null = null;
+
+  for (const range of ranges) {
+    if (range.type && range.type !== "SEMVER") {
+      continue;
+    }
+
+    const formatted = formatRangeEvents(range.events);
+
+    if (formatted.affectedRange !== "Not available") {
+      formattedRanges.push(formatted.affectedRange);
+    }
+
+    fixedVersion = fixedVersion ?? formatted.fixedVersion;
+  }
+
+  return {
+    affectedRange: formattedRanges.length > 0 ? formattedRanges.join("; ") : "Not available",
+    fixedVersion,
+  };
+}
+
+function getSourceUrl(vulnerability: OsvVulnerability): string | null {
+  const referenceUrl = vulnerability.references?.find((reference) => typeof reference.url === "string" && reference.url.length > 0)?.url ?? null;
+
+  return referenceUrl ?? vulnerability.database_specific?.url ?? vulnerability.database_specific?.source ?? null;
+}
+
+function buildVulnerabilityDetail(vulnerability: OsvVulnerability): VulnerabilityDetail {
+  const { affectedRange, fixedVersion } = formatAffectedRange(vulnerability);
+
+  return {
+    id: vulnerability.id ?? "unknown",
+    severity: normalizeSeverity(vulnerability.severity),
+    summary: vulnerability.summary?.trim() || "No summary available.",
+    affectedRange,
+    fixedVersion,
+    sourceUrl: getSourceUrl(vulnerability),
+  };
 }
 
 function walkDependencyTree(
@@ -253,11 +477,14 @@ export function computeImpactScores(graph: MutableGraph): AnalyzeResult {
   return { nodes, edges };
 }
 
-async function fetchOsvVulnerabilities(pkg: string, version?: string): Promise<{ count: number; hasCritical: boolean }> {
+async function fetchOsvVulnerabilities(
+  pkg: string,
+  version?: string,
+): Promise<{ count: number; hasCritical: boolean; details: VulnerabilityDetail[] }> {
   try {
     if (!version) {
       // If version is missing, don't attempt a broad query — return safe default.
-      return { count: 0, hasCritical: false };
+      return { count: 0, hasCritical: false, details: [] };
     }
 
     const body = {
@@ -272,61 +499,23 @@ async function fetchOsvVulnerabilities(pkg: string, version?: string): Promise<{
     });
 
     if (!resp.ok) {
-      return { count: 0, hasCritical: false };
+      return { count: 0, hasCritical: false, details: [] };
     }
 
     const data = await resp.json();
 
     // OSV may return vulns in a `vulns` array or `vulnerabilities`; handle both.
     const vulns = Array.isArray(data.vulns) ? data.vulns : Array.isArray(data.vulnerabilities) ? data.vulnerabilities : [];
+    const details: VulnerabilityDetail[] = vulns.map((vuln: OsvVulnerability) => buildVulnerabilityDetail(vuln));
 
-    const count = vulns.length;
+    const count = details.length;
 
     // Detect a critical vuln conservatively: look for severity fields containing CRITICAL/HIGH or CVSS base scores >= 9
-    let hasCritical = false;
+    const hasCritical = details.some((detail: VulnerabilityDetail) => detail.severity === "critical");
 
-    for (const v of vulns) {
-      if (!v || typeof v !== "object") continue;
-
-      // Severity may be a string or an array
-      if (typeof v.severity === "string") {
-        const s = v.severity.toLowerCase();
-        if (s.includes("critical") || s.includes("high")) {
-          hasCritical = true;
-          break;
-        }
-      }
-
-      if (Array.isArray(v.severity)) {
-        if (v.severity.some((x: string) => typeof x === "string" && /(critical|high)/i.test(x))) {
-          hasCritical = true;
-          break;
-        }
-      }
-
-      // Some OSV entries include `cvss` or `cvss_score` information.
-      if (v.cvss && typeof v.cvss === "object") {
-        const cvssValues = Object.values(v.cvss);
-        const scores = cvssValues.reduce((acc: any[], cur) => acc.concat(cur as any), [] as any[]);
-        for (const s of scores) {
-          const score = Number(s?.baseScore ?? s);
-          if (!Number.isNaN(score) && score >= 9) {
-            hasCritical = true;
-            break;
-          }
-        }
-        if (hasCritical) break;
-      }
-
-      if (v.cvss_score && typeof v.cvss_score === "number" && v.cvss_score >= 9) {
-        hasCritical = true;
-        break;
-      }
-    }
-
-    return { count, hasCritical };
+    return { count, hasCritical, details };
   } catch (e) {
-    return { count: 0, hasCritical: false };
+    return { count: 0, hasCritical: false, details: [] };
   }
 }
 
@@ -348,9 +537,9 @@ export async function analyzePackageLockWithVulns(source: string): Promise<Analy
     result.nodes.map(async (node) => {
       try {
         const vuln = await fetchOsvVulnerabilities(node.id, node.version || undefined);
-        node.vulnerabilities = { count: vuln.count, hasCritical: vuln.hasCritical };
+        node.vulnerabilities = { count: vuln.count, hasCritical: vuln.hasCritical, details: vuln.details };
       } catch (e) {
-        node.vulnerabilities = { count: 0, hasCritical: false };
+        node.vulnerabilities = { count: 0, hasCritical: false, details: [] };
       }
     }),
   );

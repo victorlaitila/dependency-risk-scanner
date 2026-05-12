@@ -17,7 +17,19 @@ export type AnalyzeNode = {
   vulnerabilities?: {
     count: number;
     hasCritical: boolean;
+    details: VulnerabilityDetail[];
   };
+};
+
+export type VulnerabilitySeverity = "low" | "medium" | "high" | "critical";
+
+export type VulnerabilityDetail = {
+  id: string;
+  severity: VulnerabilitySeverity;
+  summary: string;
+  affectedRange: string;
+  fixedVersion: string | null;
+  sourceUrl: string | null;
 };
 
 export type AnalyzeEdge = {

@@ -163,6 +163,7 @@ const Index = () => {
             impactScore={selectedNode?.impact ?? null}
             dependentsCount={selectedNode?.blastRadius.length ?? 0}
             depth={selectedNodeDepth}
+            vulnerabilities={selectedNode?.vulnerabilities?.details ?? null}
           />
         )}
         <RiskTableCard

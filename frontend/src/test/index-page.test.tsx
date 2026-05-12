@@ -9,6 +9,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
 });
 
 describe("Index", () => {
@@ -80,6 +81,71 @@ describe("Index", () => {
       expect(container.querySelectorAll("svg[aria-label='Dependency graph'] circle")).toHaveLength(2);
       expect(container.querySelectorAll("svg[aria-label='Dependency graph'] line")).toHaveLength(1);
     });
+  });
+
+  it("expands vulnerability details for a vulnerable package", async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes("/explain")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ explanation: "This is a risky package." }),
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          nodes: [
+            {
+              id: "pkg-vuln",
+              version: "1.0.0",
+              impact: 4,
+              blastRadius: [],
+              vulnerabilities: {
+                count: 1,
+                hasCritical: true,
+                details: [
+                  {
+                    id: "GHSA-test-1234",
+                    severity: "critical",
+                    summary: "Example advisory summary.",
+                    affectedRange: ">= 1.0.0, < 1.0.1",
+                    fixedVersion: "1.0.1",
+                    sourceUrl: "https://example.com/advisory",
+                  },
+                ],
+              },
+            },
+          ],
+          edges: [],
+        }),
+      });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { container } = render(<Index />);
+    const input = container.querySelector("input[type='file']") as HTMLInputElement;
+    const file = new File(["{}"], "package-lock.json", { type: "application/json" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    const detailsButton = await screen.findByRole("button", {
+      name: "View vulnerability details for pkg-vuln",
+    });
+
+    fireEvent.click(detailsButton);
+
+    expect(screen.getByText("Vulnerability details")).toBeInTheDocument();
+    expect(screen.getByText("GHSA-test-1234")).toBeInTheDocument();
+    expect(screen.getByText("Critical")).toBeInTheDocument();
+    expect(screen.getByText("Example advisory summary.")).toBeInTheDocument();
+    expect(screen.getByText(/>= 1\.0\.0, < 1\.0\.1/)).toBeInTheDocument();
+    expect(screen.getByText("1.0.1")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "https://example.com/advisory" })).toHaveAttribute(
+      "href",
+      "https://example.com/advisory",
+    );
   });
 
   it("highlights the corresponding graph node on highlight button click", async () => {

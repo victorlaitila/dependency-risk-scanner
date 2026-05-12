@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   analyzePackageLock,
+  analyzePackageLockWithVulns,
   buildDependencyGraph,
   computeImpactScores,
   parsePackageLockJson,
@@ -121,4 +122,66 @@ describe("computeImpactScores", () => {
     expect(nodeById.get("feature-a")?.blastRadius).toEqual(["app"]);
     expect(nodeById.get("app")?.blastRadius).toEqual([]);
   });
+
+  it("attaches structured vulnerability details when querying OSV", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        vulns: [
+          {
+            id: "GHSA-test-1234",
+            summary: "Example advisory summary.",
+            severity: [{ type: "CVSS_V3", score: 8.1 }],
+            affected: [
+              {
+                ranges: [
+                  {
+                    type: "SEMVER",
+                    events: [
+                      { introduced: "1.0.0" },
+                      { fixed: "1.0.1" },
+                    ],
+                  },
+                ],
+              },
+            ],
+            references: [{ type: "ADVISORY", url: "https://example.com/advisory" }],
+          },
+        ],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await analyzePackageLockWithVulns(
+      JSON.stringify({
+        name: "sample",
+        lockfileVersion: 2,
+        packages: {
+          "": { dependencies: { a: "1.0.0" } },
+          "node_modules/a": {
+            version: "1.0.0",
+          },
+        },
+      }),
+    );
+
+    const node = result.nodes.find((item) => item.id === "a");
+
+    expect(node?.vulnerabilities?.count).toBe(1);
+    expect(node?.vulnerabilities?.hasCritical).toBe(false);
+    expect(node?.vulnerabilities?.details[0]).toEqual({
+      id: "GHSA-test-1234",
+      severity: "high",
+      summary: "Example advisory summary.",
+      affectedRange: ">= 1.0.0, < 1.0.1",
+      fixedVersion: "1.0.1",
+      sourceUrl: "https://example.com/advisory",
+    });
+
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
