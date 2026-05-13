@@ -160,7 +160,7 @@ describe("AIExplanationPanel", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Demo mode placeholder AI explanation/i)).toBeInTheDocument();
+      expect(screen.getByText(/\[Mock Placeholder\]/i)).toBeInTheDocument();
       expect(fetchMock).not.toHaveBeenCalled();
     });
   });

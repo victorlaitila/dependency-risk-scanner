@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { Loader, AlertCircle, Lightbulb, ShieldAlert } from "lucide-react";
+import { Lightbulb, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { explainPackage } from "@/lib/api";
 import { strings } from "@/lib/strings";
-import type { VulnerabilityDetail, VulnerabilitySeverity } from "@/lib/dependency-risk-scanner";
+import { getSeverityDotClassName } from "@/lib/severity-styles";
+import { ExplanationSection } from "@/components/explanation-section";
+import { AdvisoryDetailCard } from "@/components/advisory-detail-card";
+import type { VulnerabilityDetail } from "@/lib/dependency-risk-scanner";
 
 interface AIExplanationPanelProps {
   packageName: string | null;
@@ -25,24 +28,7 @@ export const AIExplanationPanel = ({
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const severityLabels: Record<VulnerabilitySeverity, string> = strings.riskTableCard.severityLevels;
-
-  const getSeverityClassName = (severity: VulnerabilitySeverity) => {
-    if (severity === "critical") {
-      return "bg-red-600 text-white";
-    }
-
-    if (severity === "high") {
-      return "bg-orange-200 text-orange-900";
-    }
-
-    if (severity === "medium") {
-      return "bg-amber-200 text-amber-900";
-    }
-
-    return "bg-slate-200 text-slate-800";
-  };
+  const [selectedAdvisoryId, setSelectedAdvisoryId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!packageName || impactScore === null || version === null) {
@@ -76,6 +62,17 @@ export const AIExplanationPanel = ({
     fetchExplanation();
   }, [packageName, version, impactScore, dependentsCount, depth]);
 
+  useEffect(() => {
+    if (!vulnerabilities || vulnerabilities.length === 0) {
+      setSelectedAdvisoryId(null);
+      return;
+    }
+
+    // If there is exactly one advisory, show its details directly.
+    // If multiple, default to the first advisory selected
+    setSelectedAdvisoryId(vulnerabilities[0].id);
+  }, [vulnerabilities]);
+
   if (!packageName) {
     return null;
   }
@@ -88,99 +85,54 @@ export const AIExplanationPanel = ({
           {strings.aiExplanationPanel.title}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader className="h-4 w-4 animate-spin" />
-            {strings.aiExplanationPanel.loading}
-          </div>
-        )}
-        {error && (
-          <div className="flex items-start gap-2 text-sm">
-            <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-            <p className="text-destructive">{error}</p>
-          </div>
-        )}
-        {explanation && !isLoading && (
-          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{explanation}</p>
-        )}
+      <CardContent className="space-y-6">
+        <ExplanationSection isLoading={isLoading} error={error} explanation={explanation} />
+
         {vulnerabilities && vulnerabilities.length > 0 && !isLoading && (
-          <div className="mt-4 space-y-4 border-t border-input pt-4">
-            <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <ShieldAlert className="h-4 w-4 text-rose-500 dark:text-rose-400" />
-              {strings.riskTableCard.vulnerabilityDetailsTitle}
-            </h3>
-            <div className="space-y-4">
-              {vulnerabilities.map((vulnerability, index) => (
-                <section key={vulnerability.id} className={index > 0 ? "space-y-3 pt-4" : "space-y-3"}>
-                  {index > 0 && <div className="border-t border-dashed border-input" />}
-                  <dl className="grid gap-3 text-sm">
-                    <div>
-                      <dt className="font-medium text-foreground">
-                        {strings.riskTableCard.advisoryIdLabel}
-                      </dt>
-                      <dd className="mt-1 break-words font-mono text-muted-foreground">
-                        {vulnerability.id}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-foreground">
-                        {strings.riskTableCard.summaryLabel}
-                      </dt>
-                      <dd className="mt-1 break-words text-muted-foreground">
-                        {vulnerability.summary || strings.riskTableCard.summaryUnavailable}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-foreground">
-                        {strings.riskTableCard.severityLabel}
-                      </dt>
-                      <dd className="mt-1">
-                        <span
-                          className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${getSeverityClassName(vulnerability.severity)}`}
-                        >
-                          {severityLabels[vulnerability.severity]}
-                        </span>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-foreground">
-                        {strings.riskTableCard.affectedRangeLabel}
-                      </dt>
-                      <dd className="mt-1 break-words text-muted-foreground">
-                        {vulnerability.affectedRange || strings.riskTableCard.valueUnavailable}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-foreground">
-                        {strings.riskTableCard.fixedVersionLabel}
-                      </dt>
-                      <dd className="mt-1 break-words text-muted-foreground">
-                        {vulnerability.fixedVersion ?? strings.riskTableCard.valueUnavailable}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-foreground">{strings.riskTableCard.sourceLabel}</dt>
-                      <dd className="mt-1 break-words text-muted-foreground">
-                        {vulnerability.sourceUrl ? (
-                          <a
-                            href={vulnerability.sourceUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="underline underline-offset-2 hover:text-foreground"
-                          >
-                            {vulnerability.sourceUrl}
-                          </a>
-                        ) : (
-                          strings.riskTableCard.sourceUnavailable
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-                </section>
-              ))}
+          <section className="space-y-4 border-t border-input pt-4">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <ShieldAlert className="h-4 w-4 text-rose-500 dark:text-rose-400" />
+                {strings.riskTableCard.vulnerabilityDetailsTitle}
+              </h3>
+              <div className="text-sm text-muted-foreground">{vulnerabilities.length} found</div>
             </div>
-          </div>
+
+            {/* Compact selectable list when multiple advisories exist */}
+            {vulnerabilities.length > 1 ? (
+              <div className="space-y-2">
+                {vulnerabilities.map((vuln) => (
+                  <button
+                    key={vuln.id}
+                    type="button"
+                    onClick={() => setSelectedAdvisoryId(vuln.id)}
+                    aria-pressed={selectedAdvisoryId === vuln.id}
+                    className={`flex w-full items-start justify-between rounded-md px-3 py-2 text-left hover:bg-muted/50 ${
+                      selectedAdvisoryId === vuln.id ? "bg-muted/60" : ""
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="font-mono text-sm font-medium text-foreground break-words">{vuln.id}</p>
+                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{vuln.summary || strings.riskTableCard.summaryUnavailable}</p>
+                    </div>
+                    <div className="relative mr-2 flex-shrink-0 self-center">
+                      <span className={`inline-block h-3 w-3 rounded-full ${getSeverityDotClassName(vuln.severity)}`} aria-hidden="true" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Details panel for the selected advisory (or single advisory) */}
+            <div className="mt-4">
+              {vulnerabilities.map((vuln) => {
+                const show = selectedAdvisoryId === vuln.id || vulnerabilities.length === 1;
+                if (!show) return null;
+
+                return <AdvisoryDetailCard key={vuln.id} vulnerability={vuln} />;
+              })}
+            </div>
+          </section>
         )}
       </CardContent>
     </Card>

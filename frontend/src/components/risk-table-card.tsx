@@ -16,6 +16,7 @@ import {
   type AnalyzeNode,
 } from "@/lib/dependency-risk-scanner";
 import { strings } from "@/lib/strings";
+import { getSeverityClassName } from "@/lib/severity-styles";
 
 type RiskTableCardProps = {
   sortedNodes: AnalyzeNode[];
@@ -148,7 +149,9 @@ const RiskTableCard = ({
                   <TableCell className="text-sm text-muted-foreground">
                     {node.vulnerabilities?.count ? (
                       <span
-                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-sm font-medium ${node.vulnerabilities?.hasCritical ? "bg-red-600 text-white" : "bg-amber-100 text-amber-800"}`}
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-sm font-medium ${
+                          node.vulnerabilities?.hasCritical ? getSeverityClassName("critical") : "bg-amber-100 text-amber-800"
+                        }`}
                       >
                         <span className="rounded-full bg-background/20 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-current">
                           {node.vulnerabilities.count}

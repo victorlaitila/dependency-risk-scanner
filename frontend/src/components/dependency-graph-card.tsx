@@ -31,7 +31,9 @@ const DependencyGraphCard = ({
         {graphLayout.nodes.length > 0 && isMockMode() && (
           <p className="text-sm text-muted-foreground">
             <span className="text-red-600">{strings.dependencyGraphCard.mockModeNotePrefix}</span>{" "}
-            {strings.dependencyGraphCard.mockModeNote} {strings.dependencyGraphCard.mockModeNoteSuffix}{" "}
+            {strings.dependencyGraphCard.mockModeNote}
+            <br />
+            {strings.dependencyGraphCard.mockModeNoteSuffix}{" "}
             <a
               href="https://github.com/victorlaitila/dependency-risk-scanner"
               target="_blank"

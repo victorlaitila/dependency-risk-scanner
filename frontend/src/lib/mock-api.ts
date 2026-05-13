@@ -182,16 +182,6 @@ export async function mockExplainPackage(params: {
   depth: number;
 }): Promise<{ explanation: string }> {
   await delay(250);
-
-  const explanation = [
-    strings.mockApi.placeholderExplanation,
-    strings.mockApi.placeholderBackendHint,
-    `${strings.mockApi.packagePrefix}${params.name}`,
-    `${strings.mockApi.versionPrefix}${params.version}`,
-    `${strings.mockApi.impactScorePrefix}${params.impactScore.toFixed(2)}`,
-    `${strings.mockApi.directDependentsPrefix}${params.dependentsCount}`,
-    `${strings.mockApi.depthPrefix}${params.depth}`,
-  ].join("\n");
-
+  const explanation = strings.mockApi.placeholderExplanation
   return { explanation };
 }

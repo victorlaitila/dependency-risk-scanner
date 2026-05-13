@@ -137,10 +137,10 @@ describe("Index", () => {
     fireEvent.click(highlightButton);
 
     expect(await screen.findByText("AI Risk Explanation")).toBeInTheDocument();
-    expect(screen.getByText("Vulnerability details")).toBeInTheDocument();
+    expect(screen.getByText("Vulnerability Details")).toBeInTheDocument();
     expect(screen.getByText("Advisory ID")).toBeInTheDocument();
-    expect(screen.getByText("GHSA-test-1234")).toBeInTheDocument();
-    expect(screen.getByText("Severity")).toBeInTheDocument();
+    const matches = await screen.findAllByText("GHSA-test-1234");
+    expect(matches.length).toBeGreaterThan(0);
     expect(screen.getByText("Critical")).toBeInTheDocument();
     expect(screen.getByText("Example advisory summary.")).toBeInTheDocument();
     expect(screen.getByText(/>= 1\.0\.0, < 1\.0\.1/)).toBeInTheDocument();

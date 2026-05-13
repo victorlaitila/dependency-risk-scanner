@@ -32,7 +32,7 @@
     "searchAriaLabel": "Search packages",
     "viewDetails": "View details",
     "hideDetails": "Hide details",
-    "vulnerabilityDetailsTitle": "Vulnerability details",
+    "vulnerabilityDetailsTitle": "Vulnerability Details",
     "advisoryIdLabel": "Advisory ID",
     "severityLabel": "Severity",
     "summaryLabel": "Summary",
@@ -76,8 +76,7 @@
   },
   "mockApi": {
     "demoLockfileName": "package-lock.json",
-    "placeholderExplanation": "Demo mode placeholder AI explanation.",
-    "placeholderBackendHint": "For real AI behavior, run the backend locally.",
+    "placeholderExplanation": "[Mock Placeholder] This package contributes to overall dependency risk due to its breadth and depth in the project's dependency tree. In production, real AI-generated insights will be provided. Run the backend to see them.",
     "packagePrefix": "• Package: ",
     "versionPrefix": "• Version: ",
     "impactScorePrefix": "• Impact score: ",
