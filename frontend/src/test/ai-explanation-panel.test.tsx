@@ -74,7 +74,7 @@ describe("AIExplanationPanel", () => {
       />,
     );
 
-    expect(screen.getByText("Analyzing package...")).toBeInTheDocument();
+    expect(screen.getByText("Analyzing dependency impact...")).toBeInTheDocument();
   });
 
   it("displays explanation on successful fetch", async () => {

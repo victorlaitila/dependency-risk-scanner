@@ -10,26 +10,28 @@ export const AdvisoryDetailCard = ({ vulnerability }: AdvisoryDetailCardProps) =
   const severityLabels: Record<VulnerabilitySeverity, string> = strings.riskTableCard.severityLevels;
 
   return (
-    <article className="rounded-lg border border-input bg-background p-4 shadow-sm">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-semibold text-foreground">{vulnerability.id}</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {vulnerability.summary || strings.riskTableCard.summaryUnavailable}
-          </p>
-        </div>
-        <div className="ml-6 flex-shrink-0">
-          <span
-            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${getSeverityClassName(
-              vulnerability.severity,
-            )}`}
-          >
-            {severityLabels[vulnerability.severity]}
-          </span>
-        </div>
+    <article className="relative rounded-lg border border-input bg-background p-4 shadow-sm">
+      <div className="absolute top-4 right-4 flex-shrink-0">
+        <span
+          className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${getSeverityClassName(
+            vulnerability.severity,
+          )}`}
+        >
+          {severityLabels[vulnerability.severity]}
+        </span>
       </div>
 
-      <div className="mt-4 grid gap-3 text-sm">
+      <div className="grid gap-3 text-sm">
+        <div>
+          <dt className="font-medium text-foreground">{strings.riskTableCard.summaryLabel}</dt>
+          <dd className="mt-1 break-words text-muted-foreground">{vulnerability.summary || strings.riskTableCard.summaryUnavailable}</dd>
+        </div>
+
+        <div>
+          <dt className="font-medium text-foreground">{strings.riskTableCard.advisoryIdLabel}</dt>
+          <dd className="mt-1 break-words font-mono text-muted-foreground">{vulnerability.id}</dd>
+        </div>
+
         <div>
           <dt className="font-medium text-foreground">{strings.riskTableCard.sourceLabel}</dt>
           <dd className="mt-1 break-words text-muted-foreground">
@@ -46,11 +48,6 @@ export const AdvisoryDetailCard = ({ vulnerability }: AdvisoryDetailCardProps) =
               strings.riskTableCard.sourceUnavailable
             )}
           </dd>
-        </div>
-
-        <div>
-          <dt className="font-medium text-foreground">{strings.riskTableCard.advisoryIdLabel}</dt>
-          <dd className="mt-1 break-words font-mono text-muted-foreground">{vulnerability.id}</dd>
         </div>
 
         <div>

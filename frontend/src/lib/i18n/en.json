@@ -4,7 +4,7 @@
   },
   "uploadLockfileCard": {
     "title": "Upload Lockfile",
-    "description": "Upload your package-lock.json file to analyze dependency impact",
+    "description": "Upload your package-lock.json file to analyze dependency impact.",
     "analyzing": "Analyzing package-lock.json...",
     "analyzedSuffix": " analyzed. Click or drop to replace it.",
     "promptPrefix": "Click or drop your ",
@@ -13,26 +13,27 @@
   },
   "dependencyGraphCard": {
     "title": "Dependency Graph",
-    "description": "The graph shows how packages connect and which ones have the highest impact on your project.",
+    "description": "The graph shows how packages connect and which ones have the highest structural impact on your project.",
     "mockModeNotePrefix": "NOTE:",
     "mockModeNote": "This live demo uses mock data. The production backend is intentionally disabled to avoid hosting costs.",
     "mockModeNoteSuffix": "Full functionality is available in the ",
     "sourceCodeLink": "source code",
-    "higherImpact": "Higher impact",
-    "lowerImpact": "Lower impact",
-    "largerNode": "Larger node = more impact",
+    "higherImpact": "Higher structural impact",
+    "lowerImpact": "Lower structural impact",
+    "largerNode": "Larger node = more structural impact",
     "emptyState": "Graph visualization will render here after analysis",
     "selectionPrefix": "Selected",
     "selectionSuffix": "affected packages:"
   },
   "riskTableCard": {
-    "title": "Top Impact Packages",
-    "description": "Packages with the highest dependency impact in your graph",
+    "title": "Top Dependency Impact Packages",
+    "description": "Packages with the highest structural dependency impact in your graph.",
+    "rankingNote": "Packages are ranked by dependency impact, not by vulnerability severity.",
     "searchPlaceholder": "Search packages",
     "searchAriaLabel": "Search packages",
     "viewDetails": "View details",
     "hideDetails": "Hide details",
-    "vulnerabilityDetailsTitle": "Vulnerability Details",
+    "vulnerabilityDetailsTitle": "Known Vulnerabilities",
     "advisoryIdLabel": "Advisory ID",
     "severityLabel": "Severity",
     "summaryLabel": "Summary",
@@ -47,14 +48,14 @@
     "headers": {
       "package": "Package",
       "version": "Version",
-      "risk": "Risk",
-      "riskTooltip": "Relative impact tier derived from dependency graph position and reach",
-      "reason": "Reason",
-      "reasonTooltip": "Impact score estimates how many packages are affected if this package changes",
+      "risk": "Impact",
+      "riskTooltip": "Derived only from dependency graph position and reach. It does not indicate known vulnerabilities.",
+      "reason": "Impact Score",
+      "reasonTooltip": "This score estimates how many packages are affected if this package changes. It reflects structural impact only.",
       "vulnerabilities": "Vulnerabilities",
-      "vulnerabilitiesTooltip": "Number of known vulnerabilities for this exact package version",
+      "vulnerabilitiesTooltip": "Number of known security vulnerabilities for this exact package version.",
       "highlight": "Highlight",
-      "highlightTooltip": "Highlight this package and dependents in the graph; shows vulnerability details and AI analysis"
+      "highlightTooltip": "Highlight this package and dependents in the graph; reveals structural impact and security context."
     },
     "emptyTable": "Upload a package-lock.json to populate this table",
     "noMatches": "No packages found",
@@ -70,9 +71,13 @@
     "scrollToTopAriaLabel": "Scroll to top of risk table"
   },
   "aiExplanationPanel": {
-    "title": "AI Risk Explanation",
-    "loading": "Analyzing package...",
-    "error": "Could not load explanation"
+    "title": "Dependency Impact & Security Context",
+    "loading": "Analyzing dependency impact...",
+    "error": "Could not load explanation",
+    "structuralSectionTitle": "Dependency Impact",
+    "structuralSectionHelper": "Why this package matters structurally in the dependency graph.",
+    "securitySectionTitle": "Known Vulnerabilities",
+    "securitySectionHelper": "Security issues are shown separately from structural impact."
   },
   "mockApi": {
     "demoLockfileName": "package-lock.json",

@@ -86,17 +86,24 @@ export const AIExplanationPanel = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <ExplanationSection isLoading={isLoading} error={error} explanation={explanation} />
+        <ExplanationSection
+          title={strings.aiExplanationPanel.structuralSectionTitle}
+          helperText={strings.aiExplanationPanel.structuralSectionHelper}
+          isLoading={isLoading}
+          error={error}
+          explanation={explanation}
+        />
 
         {vulnerabilities && vulnerabilities.length > 0 && !isLoading && (
-          <section className="space-y-4 border-t border-input pt-4">
+          <section className="space-y-3 border-t border-input pt-4">
             <div className="flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <ShieldAlert className="h-4 w-4 text-rose-500 dark:text-rose-400" />
-                {strings.riskTableCard.vulnerabilityDetailsTitle}
+                {strings.aiExplanationPanel.securitySectionTitle}
               </h3>
               <div className="text-sm text-muted-foreground">{vulnerabilities.length} found</div>
             </div>
+            <p className="relative -top-1 text-xs text-muted-foreground">{strings.aiExplanationPanel.securitySectionHelper}</p>
 
             {/* Compact selectable list when multiple advisories exist */}
             {vulnerabilities.length > 1 ? (

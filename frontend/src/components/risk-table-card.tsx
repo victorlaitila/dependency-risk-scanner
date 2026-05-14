@@ -68,6 +68,7 @@ const RiskTableCard = ({
           <CardTitle className="text-sm font-medium">{strings.riskTableCard.title}</CardTitle>
         </div>
         <p className="text-sm text-muted-foreground">{strings.riskTableCard.description}</p>
+        <p className="text-xs text-muted-foreground">{strings.riskTableCard.rankingNote}</p>
       </CardHeader>
       <CardContent>
         {sortedNodes.length > 0 && (
