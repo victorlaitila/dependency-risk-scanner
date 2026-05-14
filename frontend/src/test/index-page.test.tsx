@@ -77,7 +77,7 @@ describe("Index", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Highlight pkg-a" })).toBeInTheDocument();
       expect(screen.getByText("4.0.0")).toBeInTheDocument();
-      expect(screen.getByText("Impact score: 4.00")).toBeInTheDocument();
+      expect(screen.getByText("4.00")).toBeInTheDocument();
       expect(container.querySelectorAll("svg[aria-label='Dependency graph'] circle")).toHaveLength(2);
       expect(container.querySelectorAll("svg[aria-label='Dependency graph'] line")).toHaveLength(1);
     });
@@ -136,7 +136,7 @@ describe("Index", () => {
 
     fireEvent.click(highlightButton);
 
-    expect(await screen.findByText("Dependency Impact & Security Context")).toBeInTheDocument();
+    expect(await screen.findByText("Structural Impact & Security Context")).toBeInTheDocument();
     expect(screen.getByText("Known Vulnerabilities")).toBeInTheDocument();
     expect(screen.getByText("Advisory ID")).toBeInTheDocument();
     const matches = await screen.findAllByText("GHSA-test-1234");

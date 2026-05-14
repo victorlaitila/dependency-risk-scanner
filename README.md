@@ -12,14 +12,13 @@ The core risk score is based on graph-derived impact metrics. In addition, the a
 - Searchable risk table with package highlighting
 - Vulnerability metadata per package with structured advisory details
 - Optional AI explanation panel for contextual, non-security-specific reasoning
-- Deterministic fallback when AI is unavailable
 - Frontend mock mode for demos that should not call the backend
 
 ## Architecture
 
 - Frontend: React + TypeScript + Tailwind (Vite)
 - Backend: Node.js + TypeScript + Fastify
-- AI: Hugging Face chat-completions API with deterministic fallback
+- AI: Hugging Face chat-completions API with fallback message handling
 - Vulnerabilities: OSV.dev query API
 - Flow:
   - Upload `package-lock.json` from the UI
@@ -70,18 +69,15 @@ In mock mode, the UI uses mock analysis data and placeholder AI explanations, wi
 
 ### 3. Backend Environment (optional)
 
-For deployment, you can configure backend runtime settings with environment variables:
+Only one backend environment variable is required for AI explanations:
 
 ```bash
-PORT=3001
-ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
 HUGGINGFACE_API_KEY=hf_your_token_here
-HUGGINGFACE_MODEL_ID=openai/gpt-oss-120b:fastest
 ```
 
-`ALLOWED_ORIGINS` accepts a comma-separated list of frontend origins.
-`HUGGINGFACE_MODEL_ID` is optional and can be changed if you want to try a different supported model.
 An example file is included at `backend/.env.example`.
+
+Backend runtime defaults (port, upload limit, and localhost CORS patterns) are defined in `backend/src/lib/constants.ts`.
 
 ## API
 
@@ -168,9 +164,9 @@ Fields:
 
 #### Behavior
 
-- **With API key**: Calls Hugging Face chat-completions with a supported model to generate contextual explanations
-- **Without API key**: Returns a deterministic fallback explanation based on impact score, dependent count, and tree depth
-- **On API failure**: Returns the deterministic fallback without interrupting the UI
+- **With API key**: Calls Hugging Face chat-completions using the configured default model to generate contextual explanations
+- **Without API key**: Returns a simple fallback message
+- **On API failure**: Returns the same fallback message without interrupting the UI
 - **Response length**: Kept short for UI readability
 
 Configure the HuggingFace API key via environment variable:
@@ -193,7 +189,7 @@ An example file is included at `backend/.env.example`.
 - Impact score calculation: `downstream_count / (depth + 1)`
 - Risk table populated from real API response
 - Vulnerability metadata lookup from OSV.dev with structured advisory details
-- **AI Risk Explanation**: Natural language explanations of why packages are risky based on structural impact data (with deterministic fallback)
+- **AI Risk Explanation**: Natural language explanations of why packages are risky based on structural impact data (with fallback message)
 - Frontend mock mode for reliable demos without backend/network dependence
 
 ## Notes

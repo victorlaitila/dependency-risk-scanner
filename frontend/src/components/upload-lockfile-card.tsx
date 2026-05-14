@@ -1,5 +1,5 @@
 import { Upload } from "lucide-react";
-import { type ChangeEvent, type DragEvent, type RefObject } from "react";
+import type { ChangeEvent, DragEvent, RefObject } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { strings } from "@/lib/strings";
 

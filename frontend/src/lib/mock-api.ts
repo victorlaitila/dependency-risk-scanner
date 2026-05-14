@@ -1,5 +1,7 @@
 import type { AnalyzeResponse } from "@/lib/dependency-risk-scanner";
+import type { ExplainPackageRequest } from "@/lib/api";
 import { strings } from "@/lib/strings";
+import { getMockExplanation } from "./mock-explanations";
 
 export const DEMO_LOCKFILE_NAME = strings.mockApi.demoLockfileName;
 
@@ -34,7 +36,7 @@ const MOCK_ANALYZE_RESPONSE: AnalyzeResponse = {
           {
             id: "MOCK-2026-0001",
             severity: "medium",
-            summary: "[Mock Placeholder] Memory leak in query cache when using concurrent requests.",
+            summary: "Memory leak in query cache when using concurrent requests.",
             affectedRange: ">= 5.52.0, < 5.53.0",
             fixedVersion: "5.53.0",
             sourceUrl: "https://example.com/advisories/mock-2026-0001",
@@ -75,7 +77,7 @@ const MOCK_ANALYZE_RESPONSE: AnalyzeResponse = {
           {
             id: "MOCK-2026-0002",
             severity: "high",
-            summary: "[Mock Placeholder] Improper request header validation allows injection attacks.",
+            summary: "Improper request header validation allows injection attacks.",
             affectedRange: ">= 1.7.2, < 1.7.3",
             fixedVersion: "1.7.3",
             sourceUrl: "https://example.com/advisories/mock-2026-0002",
@@ -109,7 +111,7 @@ const MOCK_ANALYZE_RESPONSE: AnalyzeResponse = {
           {
             id: "MOCK-2026-0003",
             severity: "critical",
-            summary: "[Mock Placeholder] Arbitrary file read vulnerability in plugin resolver.",
+            summary: "Arbitrary file read vulnerability in plugin resolver.",
             affectedRange: ">= 5.4.19, < 5.4.20",
             fixedVersion: "5.4.20",
             sourceUrl: "https://example.com/advisories/mock-2026-0003",
@@ -117,7 +119,7 @@ const MOCK_ANALYZE_RESPONSE: AnalyzeResponse = {
           {
             id: "MOCK-2026-0004",
             severity: "medium",
-            summary: "[Mock Placeholder] Sensitive information exposure in build output.",
+            summary: "Sensitive information exposure in build output.",
             affectedRange: ">= 5.4.0, < 5.4.19",
             fixedVersion: "5.4.19",
             sourceUrl: "https://example.com/advisories/mock-2026-0004",
@@ -137,7 +139,7 @@ const MOCK_ANALYZE_RESPONSE: AnalyzeResponse = {
           {
             id: "MOCK-2026-0005",
             severity: "low",
-            summary: "[Mock Placeholder] Performance regression in source map generation.",
+            summary: "Performance regression in source map generation.",
             affectedRange: ">= 0.23.1, < 0.23.2",
             fixedVersion: "0.23.2",
             sourceUrl: "https://example.com/advisories/mock-2026-0005",
@@ -180,8 +182,20 @@ export async function mockExplainPackage(params: {
   impactScore: number;
   dependentsCount: number;
   depth: number;
+  vulnerabilityCount: number;
+  hasCriticalVulnerabilities: boolean;
+  highestSeverity: ExplainPackageRequest["highestSeverity"];
 }): Promise<{ explanation: string }> {
   await delay(250);
-  const explanation = strings.mockApi.placeholderExplanation
-  return { explanation };
+  const { name, version } = params;
+
+  const explanation = getMockExplanation(name);
+  if (explanation) {
+    return { explanation };
+  }
+
+  // Fallback to a compact, safe single-sentence explanation for unknown mock packages
+  const displayScore = Math.round(params.impactScore);
+  return { explanation: `${name} ${version} has a relative structural impact score of ${displayScore}.` };
 }
+

@@ -50,7 +50,7 @@ const Index = () => {
     } catch {
       setNodes([]);
       setEdges([]);
-      setError(strings.uploadLockfileCard.error);
+      setError("Analysis failed. Please upload a valid package-lock.json file.");
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +154,7 @@ const Index = () => {
           getEdgeOpacity={getEdgeOpacity}
           getNodeOpacity={getNodeOpacity}
           activeNodeId={activeNodeId}
-          highlightedCount={blastRadiusSet.size + (activeNodeId ? 1 : 0)}
+          highlightedCount={blastRadiusSet.size}
         />
         {activeNodeId && (
           <AIExplanationPanel
@@ -163,7 +163,7 @@ const Index = () => {
             impactScore={selectedNode?.impact ?? null}
             dependentsCount={selectedNode?.blastRadius.length ?? 0}
             depth={selectedNodeDepth}
-            vulnerabilities={selectedNode?.vulnerabilities?.details ?? null}
+            vulnerabilities={selectedNode?.vulnerabilities ?? null}
           />
         )}
         <RiskTableCard

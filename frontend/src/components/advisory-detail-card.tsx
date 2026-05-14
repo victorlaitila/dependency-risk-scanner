@@ -1,6 +1,6 @@
 import { strings } from "@/lib/strings";
 import { getSeverityClassName } from "@/lib/severity-styles";
-import type { VulnerabilityDetail, VulnerabilitySeverity } from "@/lib/dependency-risk-scanner";
+import type { VulnerabilitySeverity, VulnerabilityDetail } from "@/lib/dependency-risk-scanner";
 
 interface AdvisoryDetailCardProps {
   vulnerability: VulnerabilityDetail;
@@ -23,17 +23,17 @@ export const AdvisoryDetailCard = ({ vulnerability }: AdvisoryDetailCardProps) =
 
       <div className="grid gap-3 text-sm">
         <div>
-          <dt className="font-medium text-foreground">{strings.riskTableCard.summaryLabel}</dt>
+          <dt className="font-semibold text-foreground">{strings.riskTableCard.summaryLabel}</dt>
           <dd className="mt-1 break-words text-muted-foreground">{vulnerability.summary || strings.riskTableCard.summaryUnavailable}</dd>
         </div>
 
         <div>
-          <dt className="font-medium text-foreground">{strings.riskTableCard.advisoryIdLabel}</dt>
+          <dt className="font-semibold text-foreground">{strings.riskTableCard.advisoryIdLabel}</dt>
           <dd className="mt-1 break-words font-mono text-muted-foreground">{vulnerability.id}</dd>
         </div>
 
         <div>
-          <dt className="font-medium text-foreground">{strings.riskTableCard.sourceLabel}</dt>
+          <dt className="font-semibold text-foreground">{strings.riskTableCard.sourceLabel}</dt>
           <dd className="mt-1 break-words text-muted-foreground">
             {vulnerability.sourceUrl ? (
               <a
@@ -51,14 +51,14 @@ export const AdvisoryDetailCard = ({ vulnerability }: AdvisoryDetailCardProps) =
         </div>
 
         <div>
-          <dt className="font-medium text-foreground">{strings.riskTableCard.affectedRangeLabel}</dt>
+          <dt className="font-semibold text-foreground">{strings.riskTableCard.affectedRangeLabel}</dt>
           <dd className="mt-1 break-words text-muted-foreground">
             {vulnerability.affectedRange || strings.riskTableCard.valueUnavailable}
           </dd>
         </div>
 
         <div>
-          <dt className="font-medium text-foreground">{strings.riskTableCard.fixedVersionLabel}</dt>
+          <dt className="font-semibold text-foreground">{strings.riskTableCard.fixedVersionLabel}</dt>
           <dd className="mt-1 break-words text-muted-foreground">
             {vulnerability.fixedVersion ?? strings.riskTableCard.valueUnavailable}
           </dd>

@@ -1,4 +1,6 @@
-export type GraphNode = {
+export type VulnerabilitySeverity = "low" | "medium" | "high" | "critical" | "none";
+
+type GraphNode = {
   id: string;
   version: string;
   impact: number;
@@ -10,25 +12,23 @@ export type GraphNode = {
   };
 };
 
-export type VulnerabilitySeverity = "low" | "medium" | "high" | "critical";
+type GraphEdge = {
+  from: string;
+  to: string;
+};
 
-export type VulnerabilityDetail = {
+type AnalyzeResult = {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+};
+
+type VulnerabilityDetail = {
   id: string;
   severity: VulnerabilitySeverity;
   summary: string;
   affectedRange: string;
   fixedVersion: string | null;
   sourceUrl: string | null;
-};
-
-export type GraphEdge = {
-  from: string;
-  to: string;
-};
-
-export type AnalyzeResult = {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
 };
 
 type DependencyTree = Record<string, { dependencies?: DependencyTree }>;

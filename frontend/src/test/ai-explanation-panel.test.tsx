@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, afterEach, beforeEach } from "vitest";
 import { AIExplanationPanel } from "../components/ai-explanation-panel";
+import type { VulnerabilityDetail } from "@/lib/dependency-risk-scanner";
 
 describe("AIExplanationPanel", () => {
   beforeEach(() => {
@@ -32,6 +33,29 @@ describe("AIExplanationPanel", () => {
       json: async () => ({ explanation: "This is a risky package." }),
     });
 
+    const vulnerabilities: { count: number; hasCritical: boolean; details: VulnerabilityDetail[] } = {
+      count: 2,
+      hasCritical: true,
+      details: [
+        {
+          id: "TEST-1",
+          severity: "medium",
+          summary: "Test advisory.",
+          affectedRange: ">= 4.17.0, < 4.17.21",
+          fixedVersion: "4.17.21",
+          sourceUrl: "https://example.com/advisories/test-1",
+        },
+        {
+          id: "TEST-2",
+          severity: "critical",
+          summary: "Test advisory.",
+          affectedRange: ">= 4.17.20, < 4.17.21",
+          fixedVersion: "4.17.21",
+          sourceUrl: "https://example.com/advisories/test-2",
+        },
+      ],
+    };
+
     vi.stubGlobal("fetch", fetchMock);
 
     render(
@@ -41,6 +65,7 @@ describe("AIExplanationPanel", () => {
         impactScore={45}
         dependentsCount={5}
         depth={3}
+        vulnerabilities={vulnerabilities}
       />,
     );
 
@@ -54,6 +79,9 @@ describe("AIExplanationPanel", () => {
           impactScore: 45,
           dependentsCount: 5,
           depth: 3,
+          vulnerabilityCount: 2,
+          hasCriticalVulnerabilities: true,
+          highestSeverity: "critical",
         }),
       });
     });
@@ -119,7 +147,7 @@ describe("AIExplanationPanel", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Could not load explanation")).toBeInTheDocument();
+      expect(screen.getByText("Could not load explanation. Please try again later.")).toBeInTheDocument();
     });
   });
 
@@ -139,7 +167,7 @@ describe("AIExplanationPanel", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Could not load explanation")).toBeInTheDocument();
+      expect(screen.getByText("Could not load explanation. Please try again later.")).toBeInTheDocument();
     });
   });
 
@@ -151,16 +179,17 @@ describe("AIExplanationPanel", () => {
 
     render(
       <AIExplanationPanel
-        packageName="lodash"
-        version="4.17.21"
-        impactScore={45}
-        dependentsCount={5}
-        depth={3}
+        packageName="react"
+        version="18.3.1"
+        impactScore={6.8}
+        dependentsCount={9}
+        depth={0}
       />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/\[Mock Placeholder\]/i)).toBeInTheDocument();
+      expect(screen.getByText(/react 18\.3\.1 has a relative structural impact score of 7/i)).toBeInTheDocument();
+      expect(screen.getByText(/no critical issues are present/i)).toBeInTheDocument();
       expect(fetchMock).not.toHaveBeenCalled();
     });
   });

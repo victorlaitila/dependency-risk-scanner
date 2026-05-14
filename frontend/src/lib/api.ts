@@ -1,5 +1,16 @@
-import type { AnalyzeResponse } from "@/lib/dependency-risk-scanner";
+import type { AnalyzeResponse, VulnerabilitySeverity } from "@/lib/dependency-risk-scanner";
 import { mockAnalyzeLockfile, mockExplainPackage } from "@/lib/mock-api";
+
+export interface ExplainPackageRequest {
+  name: string;
+  version: string;
+  impactScore: number;
+  dependentsCount: number;
+  depth: number;
+  vulnerabilityCount: number;
+  hasCriticalVulnerabilities: boolean;
+  highestSeverity: VulnerabilitySeverity | "none";
+}
 
 export function getApiBaseUrl(): string {
   return (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001").replace(/\/$/, "");
@@ -29,13 +40,7 @@ export async function analyzeLockfile(file: File): Promise<AnalyzeResponse> {
   return (await response.json()) as AnalyzeResponse;
 }
 
-export async function explainPackage(params: {
-  name: string;
-  version: string;
-  impactScore: number;
-  dependentsCount: number;
-  depth: number;
-}): Promise<{ explanation: string }> {
+export async function explainPackage(params: ExplainPackageRequest): Promise<{ explanation: string }> {
   if (isMockMode()) {
     return mockExplainPackage(params);
   }

@@ -145,7 +145,7 @@ const RiskTableCard = ({
                     </span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {strings.riskTableCard.impactScorePrefix}{node.impact.toFixed(2)}
+                    {node.impact.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {node.vulnerabilities?.count ? (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Lightbulb, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { explainPackage } from "@/lib/api";
@@ -6,7 +6,16 @@ import { strings } from "@/lib/strings";
 import { getSeverityDotClassName } from "@/lib/severity-styles";
 import { ExplanationSection } from "@/components/explanation-section";
 import { AdvisoryDetailCard } from "@/components/advisory-detail-card";
-import type { VulnerabilityDetail } from "@/lib/dependency-risk-scanner";
+import type { AnalyzeNode, VulnerabilitySeverity, VulnerabilityDetail } from "@/lib/dependency-risk-scanner";
+
+const SEVERITY_RANK: Record<VulnerabilitySeverity, number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+  critical: 3,
+};
+
+const EMPTY_VULNERABILITIES: VulnerabilityDetail[] = [];
 
 interface AIExplanationPanelProps {
   packageName: string | null;
@@ -14,7 +23,17 @@ interface AIExplanationPanelProps {
   impactScore: number | null;
   dependentsCount: number;
   depth: number;
-  vulnerabilities?: VulnerabilityDetail[] | null;
+  vulnerabilities?: AnalyzeNode["vulnerabilities"] | null;
+}
+
+function getHighestSeverity(vulnerabilities: VulnerabilityDetail[]): VulnerabilitySeverity | "none" {
+  if (vulnerabilities.length === 0) {
+    return "none";
+  }
+
+  return vulnerabilities.reduce<VulnerabilitySeverity>((highest, vulnerability) => {
+    return SEVERITY_RANK[vulnerability.severity] > SEVERITY_RANK[highest] ? vulnerability.severity : highest;
+  }, vulnerabilities[0].severity);
 }
 
 export const AIExplanationPanel = ({
@@ -29,13 +48,24 @@ export const AIExplanationPanel = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedAdvisoryId, setSelectedAdvisoryId] = useState<string | null>(null);
+  const explanationRequestIdRef = useRef(0);
+  const vulnerabilityDetails = vulnerabilities?.details ?? EMPTY_VULNERABILITIES;
+  const vulnerabilityCount = vulnerabilities?.count ?? 0;
+  const hasCriticalVulnerabilities = vulnerabilities?.hasCritical ?? false;
+  const highestSeverity = getHighestSeverity(vulnerabilityDetails);
 
   useEffect(() => {
     if (!packageName || impactScore === null || version === null) {
+      explanationRequestIdRef.current += 1;
       setExplanation(null);
       setError(null);
+      setIsLoading(false);
       return;
     }
+
+    explanationRequestIdRef.current += 1;
+    const requestId = explanationRequestIdRef.current;
+    let disposed = false;
 
     const fetchExplanation = async () => {
       setIsLoading(true);
@@ -49,29 +79,42 @@ export const AIExplanationPanel = ({
           impactScore,
           dependentsCount,
           depth,
+          vulnerabilityCount,
+          hasCriticalVulnerabilities,
+          highestSeverity,
         });
 
-        setExplanation(data.explanation);
+        if (!disposed && requestId === explanationRequestIdRef.current) {
+          setExplanation(data.explanation);
+        }
       } catch {
-        setError(strings.aiExplanationPanel.error);
+        if (!disposed && requestId === explanationRequestIdRef.current) {
+          setError("Could not load explanation. Please try again later.");
+        }
       } finally {
-        setIsLoading(false);
+        if (!disposed && requestId === explanationRequestIdRef.current) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchExplanation();
-  }, [packageName, version, impactScore, dependentsCount, depth]);
+
+    return () => {
+      disposed = true;
+    };
+  }, [packageName, version, impactScore, dependentsCount, depth, vulnerabilityCount, hasCriticalVulnerabilities, highestSeverity]);
 
   useEffect(() => {
-    if (!vulnerabilities || vulnerabilities.length === 0) {
+    if (vulnerabilityDetails.length === 0) {
       setSelectedAdvisoryId(null);
       return;
     }
 
     // If there is exactly one advisory, show its details directly.
     // If multiple, default to the first advisory selected
-    setSelectedAdvisoryId(vulnerabilities[0].id);
-  }, [vulnerabilities]);
+    setSelectedAdvisoryId(vulnerabilityDetails[0].id);
+  }, [vulnerabilityDetails]);
 
   if (!packageName) {
     return null;
@@ -85,30 +128,32 @@ export const AIExplanationPanel = ({
           {strings.aiExplanationPanel.title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-3">
+        <p className="text-xs text-muted-foreground opacity-90">
+          {strings.aiExplanationPanel.structuralSectionHelper}
+        </p>
+
         <ExplanationSection
-          title={strings.aiExplanationPanel.structuralSectionTitle}
-          helperText={strings.aiExplanationPanel.structuralSectionHelper}
           isLoading={isLoading}
           error={error}
           explanation={explanation}
         />
 
-        {vulnerabilities && vulnerabilities.length > 0 && !isLoading && (
+        {vulnerabilityDetails.length > 0 && !isLoading && (
           <section className="space-y-3 border-t border-input pt-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
               <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <ShieldAlert className="h-4 w-4 text-rose-500 dark:text-rose-400" />
                 {strings.aiExplanationPanel.securitySectionTitle}
               </h3>
-              <div className="text-sm text-muted-foreground">{vulnerabilities.length} found</div>
+              <div className="text-sm text-muted-foreground">- {vulnerabilityCount} found</div>
             </div>
-            <p className="relative -top-1 text-xs text-muted-foreground">{strings.aiExplanationPanel.securitySectionHelper}</p>
+            <p className="text-xs text-muted-foreground opacity-90">{strings.aiExplanationPanel.securitySectionHelper}</p>
 
             {/* Compact selectable list when multiple advisories exist */}
-            {vulnerabilities.length > 1 ? (
+            {vulnerabilityDetails.length > 1 ? (
               <div className="space-y-2">
-                {vulnerabilities.map((vuln) => (
+                {vulnerabilityDetails.map((vuln) => (
                   <button
                     key={vuln.id}
                     type="button"
@@ -132,8 +177,8 @@ export const AIExplanationPanel = ({
 
             {/* Details panel for the selected advisory (or single advisory) */}
             <div className="mt-4">
-              {vulnerabilities.map((vuln) => {
-                const show = selectedAdvisoryId === vuln.id || vulnerabilities.length === 1;
+              {vulnerabilityDetails.map((vuln) => {
+                const show = selectedAdvisoryId === vuln.id || vulnerabilityDetails.length === 1;
                 if (!show) return null;
 
                 return <AdvisoryDetailCard key={vuln.id} vulnerability={vuln} />;

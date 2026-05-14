@@ -8,27 +8,26 @@
     "analyzing": "Analyzing package-lock.json...",
     "analyzedSuffix": " analyzed. Click or drop to replace it.",
     "promptPrefix": "Click or drop your ",
-    "promptPackageLockfile": "package-lock.json",
-    "error": "Analysis failed. Please upload a valid package-lock.json file."
+    "promptPackageLockfile": "package-lock.json"
   },
   "dependencyGraphCard": {
     "title": "Dependency Graph",
-    "description": "The graph shows how packages connect and which ones have the highest structural impact on your project.",
+    "description": "The graph shows how packages connect and which ones have the strongest structural reach in your project.",
     "mockModeNotePrefix": "NOTE:",
-    "mockModeNote": "This live demo uses mock data. The production backend is intentionally disabled to avoid hosting costs.",
+    "mockModeNote": "This live demo uses mock data as the production backend is intentionally disabled to avoid hosting costs.",
     "mockModeNoteSuffix": "Full functionality is available in the ",
     "sourceCodeLink": "source code",
-    "higherImpact": "Higher structural impact",
-    "lowerImpact": "Lower structural impact",
-    "largerNode": "Larger node = more structural impact",
+    "higherImpact": "High structural impact",
+    "lowerImpact": "Low structural impact",
+    "largerNode": "Node size = downstream package count",
     "emptyState": "Graph visualization will render here after analysis",
     "selectionPrefix": "Selected",
-    "selectionSuffix": "affected packages:"
+    "selectionSuffix": "related downstream packages:"
   },
   "riskTableCard": {
-    "title": "Top Dependency Impact Packages",
-    "description": "Packages with the highest structural dependency impact in your graph.",
-    "rankingNote": "Packages are ranked by dependency impact, not by vulnerability severity.",
+    "title": "Top Structural Impact Packages",
+    "description": "Packages with the highest structural impact scores in your graph.",
+    "rankingNote": "Packages are ranked by structural impact score, not by vulnerability severity.",
     "searchPlaceholder": "Search packages",
     "searchAriaLabel": "Search packages",
     "viewDetails": "View details",
@@ -51,7 +50,7 @@
       "risk": "Impact",
       "riskTooltip": "Derived only from dependency graph position and reach. It does not indicate known vulnerabilities.",
       "reason": "Impact Score",
-      "reasonTooltip": "This score estimates how many packages are affected if this package changes. It reflects structural impact only.",
+      "reasonTooltip": "A relative measure of how much structural reach this package has in the dependency graph. Higher does not mean a literal count of affected packages.",
       "vulnerabilities": "Vulnerabilities",
       "vulnerabilitiesTooltip": "Number of known security vulnerabilities for this exact package version.",
       "highlight": "Highlight",
@@ -60,7 +59,6 @@
     "emptyTable": "Upload a package-lock.json to populate this table",
     "noMatches": "No packages found",
     "highlightAriaLabelPrefix": "Highlight ",
-    "impactScorePrefix": "Impact score: ",
     "vulnerabilitiesNone": "None",
     "severityLevels": {
       "low": "Low",
@@ -71,21 +69,13 @@
     "scrollToTopAriaLabel": "Scroll to top of risk table"
   },
   "aiExplanationPanel": {
-    "title": "Dependency Impact & Security Context",
+    "title": "Structural Impact & Security Context",
     "loading": "Analyzing dependency impact...",
-    "error": "Could not load explanation",
-    "structuralSectionTitle": "Dependency Impact",
-    "structuralSectionHelper": "Why this package matters structurally in the dependency graph.",
+    "structuralSectionHelper": "AI-generated overview based on structural impact score, downstream reach, depth, and known vulnerabilities.",
     "securitySectionTitle": "Known Vulnerabilities",
-    "securitySectionHelper": "Security issues are shown separately from structural impact."
+    "securitySectionHelper": "Vulnerability details are shown below, separate from the AI overview."
   },
   "mockApi": {
-    "demoLockfileName": "package-lock.json",
-    "placeholderExplanation": "[Mock Placeholder] This package contributes to overall dependency risk due to its breadth and depth in the project's dependency tree. In production, real AI-generated insights will be provided. Run the backend to see them.",
-    "packagePrefix": "• Package: ",
-    "versionPrefix": "• Version: ",
-    "impactScorePrefix": "• Impact score: ",
-    "directDependentsPrefix": "• Direct dependents: ",
-    "depthPrefix": "• Depth: "
+    "demoLockfileName": "package-lock.json"
   }
 }

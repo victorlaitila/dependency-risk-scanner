@@ -1,7 +1,6 @@
 import { SYSTEM_PROMPT, USER_PROMPT_TEMPLATE } from "./ai-explanation-prompts.js";
-
-const DEFAULT_HUGGINGFACE_MODEL_ID = "openai/gpt-oss-120b:fastest";
-const MAX_EXPLANATION_LENGTH = 260;
+import { DEFAULT_HUGGINGFACE_MODEL_ID, MAX_EXPLANATION_LENGTH } from "./constants.js";
+import type { VulnerabilitySeverity } from "./analyze-lockfile.js";
 
 export interface ExplanationRequest {
   name: string;
@@ -9,22 +8,17 @@ export interface ExplanationRequest {
   impactScore: number;
   dependentsCount: number;
   depth: number;
+  vulnerabilityCount: number;
+  hasCriticalVulnerabilities: boolean;
+  highestSeverity: VulnerabilitySeverity;
 }
 
 export interface ExplanationResponse {
   explanation: string;
 }
 
-function generateFallbackExplanation(req: ExplanationRequest): string {
-  return [
-    "AI explanation unavailable.",
-    "Relevant data:",
-    `• Package: ${req.name}`,
-    `• Version: ${req.version}`,
-    `• Impact score: ${req.impactScore}`,
-    `• Direct dependents: ${req.dependentsCount}`,
-    `• Depth: ${req.depth}`,
-  ].join("\n");
+function generateFallbackExplanation(): string {
+  return "An AI-generated explanation is currently unavailable for this package.";
 }
 
 function formatExplanation(rawText: string): string {
@@ -53,7 +47,7 @@ function formatExplanation(rawText: string): string {
     }
   }
 
-  const truncated = normalized.slice(0, MAX_EXPLANATION_LENGTH);
+  const truncated = normalized.slice(0, Math.max(0, MAX_EXPLANATION_LENGTH - 3));
   const lastSpace = truncated.lastIndexOf(" ");
   const safeEnd = lastSpace > 0 ? lastSpace : truncated.length;
   return `${truncated.slice(0, safeEnd).trimEnd()}...`;
@@ -63,13 +57,21 @@ export async function getExplanation(req: ExplanationRequest): Promise<Explanati
   const apiKey = process.env.HUGGINGFACE_API_KEY;
   if (!apiKey) {
     return {
-      explanation: generateFallbackExplanation(req),
+      explanation: generateFallbackExplanation(),
     };
   }
 
   try {
-    const modelId = process.env.HUGGINGFACE_MODEL_ID?.trim() || DEFAULT_HUGGINGFACE_MODEL_ID;
-    const userPrompt = USER_PROMPT_TEMPLATE(req.name, req.version, req.impactScore, req.dependentsCount, req.depth);
+    const userPrompt = USER_PROMPT_TEMPLATE(
+      req.name,
+      req.version,
+      req.impactScore,
+      req.dependentsCount,
+      req.depth,
+      req.vulnerabilityCount,
+      req.hasCriticalVulnerabilities,
+      req.highestSeverity,
+    );
     const response = await fetch("https://router.huggingface.co/v1/chat/completions", {
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -77,7 +79,7 @@ export async function getExplanation(req: ExplanationRequest): Promise<Explanati
       },
       method: "POST",
       body: JSON.stringify({
-        model: modelId,
+        model: DEFAULT_HUGGINGFACE_MODEL_ID,
         messages: [
           {
             role: "system",
@@ -95,10 +97,10 @@ export async function getExplanation(req: ExplanationRequest): Promise<Explanati
     if (!response.ok) {
       const errorBody = await response.text();
       console.warn(
-        `HuggingFace API error: ${response.status} (${response.statusText}) for model ${modelId}. Response body: ${errorBody || "<empty>"}. Falling back to deterministic explanation.`,
+        `HuggingFace API error: ${response.status} (${response.statusText}) for model ${DEFAULT_HUGGINGFACE_MODEL_ID}. Response body: ${errorBody || "<empty>"}. Falling back to deterministic explanation.`,
       );
       return {
-        explanation: generateFallbackExplanation(req),
+        explanation: generateFallbackExplanation(),
       };
     }
 
@@ -112,7 +114,7 @@ export async function getExplanation(req: ExplanationRequest): Promise<Explanati
 
     if (!generatedText) {
       return {
-        explanation: generateFallbackExplanation(req),
+        explanation: generateFallbackExplanation(),
       };
     }
 
@@ -124,6 +126,6 @@ export async function getExplanation(req: ExplanationRequest): Promise<Explanati
   }
 
   return {
-    explanation: generateFallbackExplanation(req),
+    explanation: generateFallbackExplanation(),
   };
 }
