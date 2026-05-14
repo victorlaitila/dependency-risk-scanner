@@ -1,6 +1,7 @@
 import { SYSTEM_PROMPT, USER_PROMPT_TEMPLATE } from "./ai-explanation-prompts.js";
 import { DEFAULT_HUGGINGFACE_MODEL_ID, MAX_EXPLANATION_LENGTH } from "./constants.js";
 import type { VulnerabilitySeverity } from "./analyze-lockfile.js";
+import { generateCacheKey, getCachedExplanation, setCachedExplanation } from "./cache.js";
 
 export interface ExplanationRequest {
   name: string;
@@ -54,6 +55,18 @@ function formatExplanation(rawText: string): string {
 }
 
 export async function getExplanation(req: ExplanationRequest): Promise<ExplanationResponse> {
+  // Generate a deterministic cache key based on the request parameters
+  const cacheKey = generateCacheKey(req);
+
+  // Try to retrieve from Redis cache first
+  const cachedExplanation = await getCachedExplanation(cacheKey);
+  if (cachedExplanation) {
+    console.log(`Serving explanation from cache for key: ${cacheKey}`);
+    return {
+      explanation: cachedExplanation,
+    };
+  }
+
   const apiKey = process.env.HUGGINGFACE_API_KEY;
   if (!apiKey) {
     return {
@@ -118,8 +131,13 @@ export async function getExplanation(req: ExplanationRequest): Promise<Explanati
       };
     }
 
+    const formattedExplanation = formatExplanation(generatedText);
+
+    // Cache the formatted explanation for future requests
+    await setCachedExplanation(cacheKey, formattedExplanation);
+
     return {
-      explanation: formatExplanation(generatedText),
+      explanation: formattedExplanation,
     };
   } catch (error) {
     console.warn(`AI explanation error: ${error instanceof Error ? error.message : String(error)}. Using fallback.`);

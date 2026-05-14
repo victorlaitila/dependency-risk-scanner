@@ -69,11 +69,20 @@ In mock mode, the UI uses mock analysis data and placeholder AI explanations, wi
 
 ### 3. Backend Environment (optional)
 
-Only one backend environment variable is required for AI explanations:
+For AI explanations, configure the HuggingFace API key:
 
 ```bash
 HUGGINGFACE_API_KEY=hf_your_token_here
 ```
+
+To enable Redis caching for AI explanations, optionally add Upstash credentials:
+
+```bash
+UPSTASH_REDIS_REST_URL=https://your-upstash-url.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
+```
+
+When Redis is configured, generated explanations are cached for 24 hours. If Redis credentials are missing, caching is disabled and explanations are generated on each request.
 
 An example file is included at `backend/.env.example`.
 
@@ -168,16 +177,9 @@ Fields:
 - **Without API key**: Returns a simple fallback message
 - **On API failure**: Returns the same fallback message without interrupting the UI
 - **Response length**: Kept short for UI readability
+- **Caching**: If Redis is configured, explanations are cached with a 24-hour TTL to avoid regenerating identical explanations. If Redis is unavailable or unconfigured, caching is skipped and explanations are generated on each request.
 
-Configure the HuggingFace API key via environment variable:
-
-```bash
-HUGGINGFACE_API_KEY=hf_your_token_here
-```
-
-An example file is included at `backend/.env.example`.
-
-
+See the [Backend Environment](#3-backend-environment-optional) section above to configure the HuggingFace API key and optional Redis caching.
 
 ## MVP Features
 
