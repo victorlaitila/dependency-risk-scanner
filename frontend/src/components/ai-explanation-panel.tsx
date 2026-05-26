@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { explainPackage } from "@/lib/api";
 import { strings } from "@/lib/strings";
 import { getSeverityDotClassName } from "@/lib/severity-styles";
+import { generateWhyThisMatters } from "@/lib/why-this-matters";
 import { ExplanationSection } from "@/components/explanation-section";
 import { AdvisoryDetailCard } from "@/components/advisory-detail-card";
 import type { AnalyzeNode, VulnerabilitySeverity, VulnerabilityDetail } from "@/lib/dependency-risk-scanner";
@@ -137,6 +138,7 @@ export const AIExplanationPanel = ({
           isLoading={isLoading}
           error={error}
           explanation={explanation}
+          whyThisMatters={impactScore !== null ? generateWhyThisMatters(impactScore, hasCriticalVulnerabilities, strings.aiExplanationPanel.whyThisMatters) : undefined}
         />
 
         {vulnerabilityDetails.length > 0 && !isLoading && (

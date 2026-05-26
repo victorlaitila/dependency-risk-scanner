@@ -73,7 +73,16 @@
     "loading": "Analyzing dependency impact...",
     "structuralSectionHelper": "AI-generated overview based on structural impact score, downstream reach, depth, and known vulnerabilities.",
     "securitySectionTitle": "Known Vulnerabilities",
-    "securitySectionHelper": "Vulnerability details are shown below, separate from the AI overview."
+    "securitySectionHelper": "Vulnerability details are shown below, separate from the AI overview.",
+    "whyThisMattersTitle": "Why This Matters",
+    "whyThisMatters": {
+      "highCritical": "This package is both structurally central and affected by critical vulnerabilities, making it particularly important to review.",
+      "highNoCritical": "This package is structurally central to the project, meaning changes could affect many downstream dependencies, even though no critical security issues are currently known.",
+      "mediumCritical": "This package has moderate structural reach but is affected by critical vulnerabilities that may warrant closer attention.",
+      "mediumNoCritical": "This package has moderate structural reach and no known security vulnerabilities, suggesting relatively balanced concern.",
+      "lowCritical": "This package has limited structural reach, but existing critical vulnerabilities may still warrant attention.",
+      "lowNoCritical": "This package has limited structural reach and no known security vulnerabilities, suggesting lower immediate concern."
+    }
   },
   "mockApi": {
     "demoLockfileName": "package-lock.json"

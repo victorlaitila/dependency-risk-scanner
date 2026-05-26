@@ -5,9 +5,15 @@ interface ExplanationSectionProps {
   isLoading: boolean;
   error: string | null;
   explanation: string | null;
+  whyThisMatters?: string;
 }
 
-export const ExplanationSection = ({ isLoading, error, explanation }: ExplanationSectionProps) => {
+export const ExplanationSection = ({
+  isLoading,
+  error,
+  explanation,
+  whyThisMatters,
+}: ExplanationSectionProps) => {
   return (
     <section className="rounded-lg border border-input bg-background p-4 shadow-sm">
       {isLoading && (
@@ -23,7 +29,15 @@ export const ExplanationSection = ({ isLoading, error, explanation }: Explanatio
         </div>
       )}
       {explanation && !isLoading && (
-        <p className="text-sm leading-relaxed text-muted-foreground">{explanation}</p>
+        <div className="space-y-3">
+          <p className="text-sm leading-relaxed text-muted-foreground">{explanation}</p>
+          {whyThisMatters && (
+            <div className="border-t border-input pt-3">
+              <p className="mb-1 text-xs font-medium text-foreground">{strings.aiExplanationPanel.whyThisMattersTitle}</p>
+              <p className="text-xs italic leading-relaxed text-muted-foreground">{whyThisMatters}</p>
+            </div>
+          )}
+        </div>
       )}
     </section>
   );

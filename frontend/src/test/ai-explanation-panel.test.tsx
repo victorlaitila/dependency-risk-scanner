@@ -103,6 +103,7 @@ describe("AIExplanationPanel", () => {
     );
 
     expect(screen.getByText("Analyzing dependency impact...")).toBeInTheDocument();
+    expect(screen.queryByText(/Why This Matters/i)).not.toBeInTheDocument();
   });
 
   it("displays explanation on successful fetch", async () => {
@@ -191,6 +192,70 @@ describe("AIExplanationPanel", () => {
       expect(screen.getByText(/react 18\.3\.1 has a relative structural impact score of 7/i)).toBeInTheDocument();
       expect(screen.getByText(/no critical issues are present/i)).toBeInTheDocument();
       expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
+  it("displays 'Why This Matters' section for high impact packages", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ explanation: "This is a risky package." }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <AIExplanationPanel
+        packageName="lodash"
+        version="4.17.21"
+        impactScore={5.5}
+        dependentsCount={5}
+        depth={3}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Why This Matters")).toBeInTheDocument();
+      expect(screen.getByText(/structurally central to the project/)).toBeInTheDocument();
+    });
+  });
+
+  it("displays 'Why This Matters' with critical vulnerabilities context", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ explanation: "This is a risky package." }),
+    });
+
+    const vulnerabilities: { count: number; hasCritical: boolean; details: VulnerabilityDetail[] } = {
+      count: 1,
+      hasCritical: true,
+      details: [
+        {
+          id: "TEST-1",
+          severity: "critical",
+          summary: "Critical advisory.",
+          affectedRange: ">= 1.0.0, < 2.0.0",
+          fixedVersion: "2.0.0",
+          sourceUrl: "https://example.com/advisories/test-1",
+        },
+      ],
+    };
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <AIExplanationPanel
+        packageName="express"
+        version="4.18.0"
+        impactScore={5.5}
+        dependentsCount={10}
+        depth={1}
+        vulnerabilities={vulnerabilities}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Why This Matters")).toBeInTheDocument();
+      expect(screen.getByText(/both structurally central and affected by critical vulnerabilities/)).toBeInTheDocument();
     });
   });
 });

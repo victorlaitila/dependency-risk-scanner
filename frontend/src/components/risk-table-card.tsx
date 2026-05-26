@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ChevronUp, HelpCircle, Search } from "lucide-react";
+import { AlertTriangle, ChevronUp, HelpCircle, Search, ArrowUp, ArrowDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -18,10 +18,30 @@ import {
 import { strings } from "@/lib/strings";
 import { getSeverityClassName } from "@/lib/severity-styles";
 
+type SortColumn = "impact" | "impactScore" | "vulnerabilities" | null;
+type SortDirection = "asc" | "desc";
+
 type RiskTableCardProps = {
   sortedNodes: AnalyzeNode[];
   activeNodeId: string | null;
   onHighlightClick: (nodeId: string) => void;
+};
+
+const sortComparators: Record<Exclude<SortColumn, null>, (a: AnalyzeNode, b: AnalyzeNode) => number> = {
+  impact: (a: AnalyzeNode, b: AnalyzeNode): number => {
+    return a.impact - b.impact;
+  },
+  impactScore: (a: AnalyzeNode, b: AnalyzeNode): number => {
+    return a.impact - b.impact;
+  },
+  vulnerabilities: (a: AnalyzeNode, b: AnalyzeNode): number => {
+    const countDiff = (a.vulnerabilities?.count ?? 0) - (b.vulnerabilities?.count ?? 0);
+    if (countDiff !== 0) return countDiff;
+    // Tiebreaker: critical vulnerabilities first
+    const aCritical = a.vulnerabilities?.hasCritical ? 1 : 0;
+    const bCritical = b.vulnerabilities?.hasCritical ? 1 : 0;
+    return bCritical - aCritical;
+  },
 };
 
 const RiskTableCard = ({
@@ -31,6 +51,23 @@ const RiskTableCard = ({
 }: RiskTableCardProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [sortColumn, setSortColumn] = useState<SortColumn>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  const handleSortColumnClick = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Cycle: desc -> asc -> unsorted
+      if (sortDirection === "desc") {
+        setSortDirection("asc");
+      } else {
+        setSortColumn(null);
+      }
+    } else {
+      // New column, start with descending
+      setSortColumn(column);
+      setSortDirection("desc");
+    }
+  };
 
   useEffect(() => {
     const onScroll = () => {
@@ -49,16 +86,52 @@ const RiskTableCard = ({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const filteredNodes = useMemo(() => {
+  const filteredAndSortedNodes = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return sortedNodes;
+    let filtered = normalizedQuery
+      ? sortedNodes.filter((node) => node.id.toLowerCase().includes(normalizedQuery))
+      : sortedNodes;
+
+    // Apply sorting if a column is selected
+    if (sortColumn && sortColumn in sortComparators) {
+      const compareFn = sortComparators[sortColumn];
+      filtered = [...filtered].sort((a, b) => {
+        const result = compareFn(a, b);
+        return sortDirection === "desc" ? -result : result;
+      });
     }
 
-    return sortedNodes.filter((node) => node.id.toLowerCase().includes(normalizedQuery));
-  }, [sortedNodes, searchQuery]);
+    return filtered;
+  }, [sortedNodes, searchQuery, sortColumn, sortDirection]);
 
-  const showNoMatches = sortedNodes.length > 0 && filteredNodes.length === 0;
+  const showNoMatches = sortedNodes.length > 0 && filteredAndSortedNodes.length === 0;
+
+  const renderSortIndicator = (column: SortColumn) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === "desc" ? (
+      <ArrowDown className="h-3 w-3 ml-1" aria-label="Sorted descending" />
+    ) : (
+      <ArrowUp className="h-3 w-3 ml-1" aria-label="Sorted ascending" />
+    );
+  };
+
+  const renderSortableHeader = (
+    column: SortColumn,
+    label: string,
+    tooltip: string,
+  ) => (
+    <button
+      type="button"
+      onClick={() => handleSortColumnClick(column)}
+      className="flex items-center gap-1.5 hover:text-foreground transition-colors text-left"
+    >
+      {label}
+      <Tooltip content={tooltip}>
+        <HelpCircle className="h-4 w-4 cursor-help text-red-500/60 hover:text-red-500/80 flex-shrink-0" />
+      </Tooltip>
+      {renderSortIndicator(column)}
+    </button>
+  );
 
   return (
     <Card>
@@ -86,31 +159,16 @@ const RiskTableCard = ({
         <Table className="table-fixed min-w-[880px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[220px]">{strings.riskTableCard.headers.package}</TableHead>
+              <TableHead className="w-[200px]">{strings.riskTableCard.headers.package}</TableHead>
               <TableHead className="w-[100px]">{strings.riskTableCard.headers.version}</TableHead>
-              <TableHead className="w-[80px]">
-                <div className="flex items-center gap-1.5">
-                  {strings.riskTableCard.headers.risk}
-                  <Tooltip content={strings.riskTableCard.headers.riskTooltip}>
-                    <HelpCircle className="h-4 w-4 cursor-help text-red-500/60 hover:text-red-500/80" />
-                  </Tooltip>
-                </div>
+              <TableHead className="w-[90px]">
+                {renderSortableHeader("impact", strings.riskTableCard.headers.risk, strings.riskTableCard.headers.riskTooltip)}
               </TableHead>
               <TableHead className="w-[140px]">
-                <div className="flex items-center gap-1.5">
-                  {strings.riskTableCard.headers.reason}
-                  <Tooltip content={strings.riskTableCard.headers.reasonTooltip}>
-                    <HelpCircle className="h-4 w-4 cursor-help text-red-500/60 hover:text-red-500/80" />
-                  </Tooltip>
-                </div>
+                {renderSortableHeader("impactScore", strings.riskTableCard.headers.reason, strings.riskTableCard.headers.reasonTooltip)}
               </TableHead>
               <TableHead className="w-[120px]">
-                <div className="flex items-center gap-1.5">
-                  {strings.riskTableCard.headers.vulnerabilities}
-                  <Tooltip content={strings.riskTableCard.headers.vulnerabilitiesTooltip}>
-                    <HelpCircle className="h-4 w-4 cursor-help text-red-500/60 hover:text-red-500/80" />
-                  </Tooltip>
-                </div>
+                {renderSortableHeader("vulnerabilities", strings.riskTableCard.headers.vulnerabilities, strings.riskTableCard.headers.vulnerabilitiesTooltip)}
               </TableHead>
               <TableHead className="w-[100px] text-right">
                 <div className="flex items-center justify-end gap-1.5">
@@ -130,7 +188,7 @@ const RiskTableCard = ({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredNodes.map((node) => (
+              filteredAndSortedNodes.map((node) => (
                 <TableRow
                   key={node.id}
                   className={activeNodeId === node.id ? "bg-muted/50" : undefined}
